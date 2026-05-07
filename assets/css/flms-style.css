@@ -1,0 +1,3255 @@
+/* =========================================
+   FLMS: THE "ALL-STAR" GOLD THEME (FINAL v8 - Mobile Optimized)
+   ========================================= */
+
+:root {
+    --flms-gold: #D4AF37;       /* Metallic Gold */
+    --flms-gold-hover: #b5952f; /* Darker Gold */
+    --flms-black: #0a0a0a;      /* Rich Black */
+    --flms-dark: #1c1c1c;       /* Dark Grey */
+    --flms-white: #ffffff;
+    --flms-light-grey: #f4f4f4;
+}
+
+/* =========================================
+   1. GLOBAL CONTAINERS & UTILS
+   ========================================= */
+.flms-table-responsive,
+.flms-match-list,
+.flms-comp-wrapper,
+.flms-hub-wrapper,
+.flms-dashboard-wrapper,
+.flms-top-scorers,
+.flms-player-card,
+.flms-team-profile,
+.flms-match-center {
+    width: 100% !important;
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    box-sizing: border-box;
+}
+
+.flms-roster-section {
+    background: #fff;
+    padding: 25px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    border-top: 3px solid var(--flms-gold);
+}
+
+.flms-referee-dash ul { list-style: none; padding: 0; }
+.flms-referee-dash li {
+    background: #fff; border: 1px solid #eee; padding: 15px; margin-bottom: 5px;
+    display: flex; justify-content: space-between; align-items: center; border-radius: 4px;
+}
+
+/* Custom Text Colors */
+.flms-setup-box h2, 
+.flms-add-player-box h4, 
+div#flms-roster-section h3, 
+.woocommerce-billing-fields h3, 
+.order_review_heading h3,
+.flms-col-left h3 {
+    color: var(--flms-black);
+}
+
+.flms-player-info h1 {
+    color: var(--flms-white);
+}
+
+/* =========================================
+   2. LEAGUE TABLE (Elegant Black & Gold)
+   ========================================= */
+.flms-table-responsive {
+    overflow-x: auto;
+    margin: 25px 0;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    border-radius: 8px;
+    background: #fff;
+    border: 1px solid #eee;
+    -webkit-overflow-scrolling: touch;
+}
+
+.flms-league-table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-size: 14px;
+    table-layout: fixed;
+}
+
+.flms-league-table thead tr {
+    background-color: var(--flms-black);
+    color: var(--flms-white);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 12px;
+}
+
+.flms-league-table th, 
+.flms-league-table td {
+    padding: 15px 10px;
+    border-bottom: 1px solid #eee;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.flms-league-table th { border-right: 1px solid #333; }
+.flms-league-table th:last-child { border-right: none; }
+
+/* thead: white text on dark header (do not reuse td.club black on th) */
+.flms-league-table thead th {
+    color: var(--flms-white);
+}
+
+.flms-league-table th.club, .flms-league-table td.club { text-align: left; font-weight: 700; min-width: 180px; }
+.flms-league-table td.club { color: var(--flms-black); }
+.flms-league-table td.pos { color: #000; font-weight: 700; width: 50px; }
+.flms-league-table td.pts { font-weight: 800; background-color: #fafafa; color: var(--flms-black); font-size: 15px; border-left: 1px solid #eee; }
+
+/* Highlights */ 
+.flms-league-table tbody tr:first-child td.pos { border-left: 4px solid var(--flms-gold); background-color: #fffdf5; }
+.rank-1 { background-color: #fffdf5 !important; }
+.flms-form-badge { display: inline-block; width: 22px; height: 22px; line-height: 22px; color: #fff; font-size: 10px; font-weight: bold; text-align: center; border-radius: 4px; text-transform: uppercase; }
+
+/* Golden Boot Specifics */
+.flms-golden-boot .gb-title { display: none !important; }
+.flms-golden-boot th:first-child { width: 60px !important; }
+.flms-golden-boot th:last-child { color: var(--flms-gold) !important; width: 60px !important; }
+.flms-golden-boot td:nth-child(2) { width: 40%; white-space: nowrap; }
+.flms-golden-boot td:nth-child(3) { width: 30%; font-size: 11px !important; color: #777; }
+
+.flms-top-scorers.flms-golden-boot {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+}
+
+/* =========================================
+   3. PLAYER PROFILE CARD
+   ========================================= */
+.flms-player-card { background: #fff; border: none; border-radius: 12px; padding: 0; max-width: 700px; margin: 0 auto; box-shadow: 0 15px 40px rgba(0,0,0,0.1); overflow: hidden; }
+.flms-player-header { background: var(--flms-black); color: var(--flms-white); padding: 20px; display: flex; gap: 30px; align-items: center; }
+.flms-player-photo img { width: 130px; height: 130px; border-radius: 50%; object-fit: cover; border: 4px solid var(--flms-gold); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+.flms-p-name { margin: 0 0 10px 0; font-size: 32px; line-height: 1.1; color: var(--flms-gold); font-weight: 800; text-transform: uppercase; }
+.flms-p-team { color: #000; font-size: 16px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+.flms-p-meta .meta-tag { background: rgba(255,255,255,0.1); color: #fff; padding: 5px 10px; border-radius: 4px; font-size: 13px; margin-right: 10px; border: 1px solid #333; }
+.flms-p-meta strong { color: var(--flms-gold); }
+
+.flms-stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin: 0; padding: 20px 0; background: transparent; }
+.stat-box { background: #fff; padding: 25px; text-align: center; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
+.stat-box .count { display: block; font-size: 36px; font-weight: 800; color: var(--flms-black); margin-bottom: 5px; }
+.stat-box .label { font-size: 11px; text-transform: uppercase; letter-spacing: 2px; color: #000; font-weight: 700; }
+.stat-box.goal .count { color: #2ecc71; }
+.stat-box.yellow .count { color: #f1c40f; }
+.stat-box.red .count { color: #e74c3c; }
+
+.flms-match-history { padding: 30px; }
+.flms-match-history h3 { color: var(--flms-black); border-bottom: 2px solid var(--flms-gold); display: inline-block; padding-bottom: 5px; margin-bottom: 20px; }
+.flms-mini-history { list-style: none; padding: 0; }
+.flms-mini-history li { padding: 12px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; font-size: 14px; }
+.p-goal-badge { background: #2ecc71; color: white; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
+
+/* =========================================
+   4. CHECKOUT (AGD dark / gold — matches site chrome)
+   ========================================= */
+body.woocommerce-checkout {
+    background-color: #0b0e1e !important;
+}
+.woocommerce-checkout {
+    background: linear-gradient(180deg, #0b0e1e 0%, #12152a 100%);
+    padding: 40px 0 60px;
+    color: #e8e8e8;
+}
+.woocommerce-checkout .woocommerce {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 16px;
+}
+.woocommerce-checkout #customer_details {
+    background: linear-gradient(145deg, rgba(26, 28, 42, 0.98) 0%, rgba(18, 21, 38, 0.99) 100%);
+    padding: 22px 24px 28px;
+    border-radius: 14px;
+    border: 1px solid rgba(212, 175, 55, 0.22);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.woocommerce-checkout #customer_details .woocommerce-billing-fields h3 {
+    color: #fff;
+    font-size: 1.15rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(212, 175, 55, 0.25);
+    padding-bottom: 10px;
+}
+.woocommerce-checkout input[type="text"],
+.woocommerce-checkout input[type="email"],
+.woocommerce-checkout input[type="tel"],
+.woocommerce-checkout input[type="number"],
+.woocommerce-checkout select,
+.woocommerce-checkout textarea {
+    background: rgba(255, 255, 255, 0.06) !important;
+    border: 1px solid rgba(212, 175, 55, 0.28) !important;
+    border-radius: 8px !important;
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+    color: #f0f0f0 !important;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+.woocommerce-checkout input::placeholder,
+.woocommerce-checkout textarea::placeholder {
+    color: rgba(255, 255, 255, 0.45);
+}
+.woocommerce-checkout input:focus,
+.woocommerce-checkout select:focus,
+.woocommerce-checkout textarea:focus {
+    border-color: var(--flms-gold) !important;
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15) !important;
+    outline: none !important;
+}
+.woocommerce-checkout label {
+    color: #c8c8d0 !important;
+    font-size: 13px !important;
+}
+#order_review,
+#order_review_heading {
+    background: linear-gradient(145deg, rgba(22, 24, 38, 0.98) 0%, rgba(18, 21, 38, 0.99) 100%);
+    border-radius: 14px;
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+}
+#order_review {
+    padding: 24px 22px 28px;
+}
+#order_review_heading {
+    text-align: center;
+    font-size: 1.25rem;
+    margin-bottom: 16px;
+    padding: 20px 20px 0;
+    color: #fff !important;
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+.woocommerce-checkout-review-order-table th,
+.woocommerce-checkout-review-order-table td {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: #ddd;
+}
+.woocommerce-checkout-review-order-table .order-total th,
+.woocommerce-checkout-review-order-table .order-total td {
+    border-bottom: none !important;
+    color: #fff;
+    font-size: 1.1rem;
+}
+.product-name { font-weight: 600; color: #fff; }
+.product-total { font-weight: 700; color: var(--flms-gold); }
+
+/* Terms consent */
+.flms-checkout-terms-consent {
+    margin: 16px 0 8px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    border-radius: 10px;
+}
+.flms-checkout-terms-line {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #ccc;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px;
+}
+.flms-checkout-terms-label {
+    display: inline-flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    margin: 0;
+}
+.flms-checkout-terms-label input[type="checkbox"] {
+    margin-top: 4px;
+    width: 18px;
+    height: 18px;
+    accent-color: var(--flms-gold);
+}
+.flms-checkout-open-terms {
+    background: none;
+    border: none;
+    color: #D4AF37;
+    text-decoration: underline;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+    text-align: left;
+}
+.flms-checkout-open-terms:hover {
+    color: #f0d78c;
+}
+.flms-checkout-terms-modal-wrap .flms-checkout-terms-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: #ccc;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+}
+.flms-checkout-terms-modal-actions {
+    margin-top: 12px;
+}
+
+/* Referral + bypass */
+.flms-checkout-referral {
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+.flms-checkout-bypass {
+    margin-bottom: 16px;
+    padding: 14px 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px dashed rgba(212, 175, 55, 0.35);
+    border-radius: 10px;
+}
+.flms-checkout-bypass-title {
+    margin: 0 0 10px 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: #D4AF37;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+.flms-checkout-bypass .flms-checkout-bypass-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.flms-checkout-bypass #flms_code_input {
+    flex: 1;
+}
+
+#place_order {
+    background: linear-gradient(180deg, #e8c547 0%, #D4AF37 100%) !important;
+    color: #0b0e1e !important;
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    padding: 16px !important;
+    width: 100%;
+    border-radius: 8px !important;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-top: 16px;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: none !important;
+    box-shadow: 0 4px 20px rgba(212, 175, 55, 0.35);
+}
+#place_order:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(212, 175, 55, 0.45);
+}
+.woocommerce-form-coupon-toggle, .woocommerce-form-login-toggle { display: none !important; }
+form.cart { display: flex; justify-content: center; align-items: center; }
+
+.woocommerce-checkout #payment {
+    background: rgba(0, 0, 0, 0.22);
+    border-radius: 10px;
+    padding: 16px 14px;
+    border: 1px solid rgba(212, 175, 55, 0.18);
+    margin-top: 12px;
+}
+.woocommerce-checkout #payment ul.payment_methods li label {
+    color: #e8e8e8 !important;
+}
+.woocommerce-checkout .woocommerce-NoticeGroup {
+    margin-bottom: 16px;
+}
+
+/* =========================================
+   5. MATCH LIST (Fixed Alignment)
+   ========================================= */
+.flms-match-list { width: 100%; max-width: 1000px; margin: 0 auto; }
+.flms-round-title { font-size: 14px; font-weight: 900; text-transform: uppercase; color: var(--flms-gold); margin: 30px 0 10px; padding-left: 15px; border-left: 4px solid var(--flms-gold); letter-spacing: 1px; background:transparent; }
+.flms-fixtures { background: #fff; border-radius: 8px; border: 1px solid #e0e0e0; box-shadow: 0 4px 10px rgba(0,0,0,0.03); overflow: hidden; margin:0; }
+
+.flms-fixture-row {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 0 !important;
+    border-bottom: 1px solid #f0f0f0;
+    background: #fff;
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 70px;
+}
+.flms-fixture-row > a.flms-match-link {
+    display: flex !important; width: 100%; align-items: stretch; text-decoration: none; color: inherit;
+}
+.flms-fixture-row:hover { background: #fafafa; }
+
+/* Match Data */
+.match-meta {
+    width: 100px; flex-shrink: 0; text-align: center; color: #000;
+    border-right: 1px solid #f0f0f0;
+    display: flex !important; flex-direction: column !important; justify-content: center !important;
+    padding: 15px;
+}
+.m-date { font-weight: 800; color: var(--flms-black); font-size: 12px; margin-bottom: 4px; line-height: 1; }
+.m-time { font-size: 11px; line-height: 1; }
+.m-venue { font-size: 10px; line-height: 1.2; color: #666; margin-top: 4px; display: block; }
+
+.match-teams {
+    flex: 1; display: flex !important; align-items: center !important; justify-content: center !important;
+    padding: 10px 15px; gap: 10px;
+}
+
+.team { flex: 1; display: flex !important; align-items: center !important; gap: 10px; font-weight: 700; font-size: 14px; color: var(--flms-black); min-width: 0; }
+.team.home { justify-content: flex-end; text-align: right; }
+.team.away { justify-content: flex-start; text-align: left; }
+.t-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.t-logo { width: 35px !important; height: 35px !important; min-width: 35px !important; border-radius: 50%; border: 1px solid #eee; background: #f9f9f9; object-fit: cover !important; flex-shrink: 0; }
+
+.vs-badge, .score { width: 50px; text-align: center; flex-shrink: 0; }
+.vs-badge { background: #f4f4f4; color: #000; font-size: 11px; font-weight: 800; padding: 6px 0; border-radius: 4px; }
+.score { background: var(--flms-black); color: var(--flms-gold); font-size: 16px; font-weight: 800; padding: 6px 0; border-radius: 6px; letter-spacing: 1px; }
+
+/* =========================================
+   6. SINGLE MATCH CENTER
+   ========================================= */
+.flms-match-center { max-width: 900px; margin: 0 auto; }
+.flms-scoreboard { background: radial-gradient(circle, #222 0%, #000 100%); color: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); text-align: center; margin-bottom: 40px; border-bottom: 4px solid var(--flms-gold); }
+.fs-match-info { color: var(--flms-gold); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 20px; font-weight: 600; }
+.fs-venue { color: rgba(255,255,255,0.8); font-size: 12px; }
+.fs-board { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
+.fs-result { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.fs-vs-box { font-size: 36px; font-weight: 800; color: var(--flms-gold); }
+.fs-status { font-size: 12px; text-transform: uppercase; }
+.fs-status.upcoming { color: rgba(255,255,255,0.7); }
+.fs-team { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.fs-team img { width: 80px; height: 80px; object-fit: contain; background: #fff; border-radius: 50%; padding: 5px; border: 2px solid var(--flms-gold); }
+.fs-team h3 { margin: 0; }
+.fs-team h3 a { color: #fff; text-decoration: none; font-size: 18px; font-weight: 700; text-transform: uppercase; }
+.fs-role { font-size: 11px; color: rgba(255,255,255,0.6); text-transform: uppercase; }
+.fs-kit { margin-top: 4px; font-size: 12px; color: rgba(255,255,255,0.9); font-weight: 600; max-width: 220px; line-height: 1.35; }
+.fs-kit .flms-jersey-color { display: inline-flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 4px; }
+.flms-jersey-swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(255,255,255,0.45); vertical-align: middle; flex-shrink: 0; }
+.flms-jersey-na { color: rgba(255,255,255,0.45); }
+.flms-friendly-create .flms-field-hint { display: block; font-size: 12px; color: #888; margin-top: 6px; }
+.flms-kit-color-field .flms-kit-color-input { display: block; width: 56px; height: 40px; padding: 2px; border: 1px solid #ccc; border-radius: 6px; cursor: pointer; background: #fff; }
+.flms-friendly-kit-form .flms-kit-color-input,
+.flms-friendly-match-details .flms-kit-color-input {
+    width: 56px;
+    height: 44px;
+    padding: 2px;
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 8px;
+    cursor: pointer;
+    background: #fff;
+    vertical-align: middle;
+}
+.flms-friendly-create.dark-mode .flms-kit-color-input,
+.flms-dashboard-wrapper.flms-friendly-create .flms-kit-color-input {
+    border-color: #ccc;
+}
+.flms-friendly-inbox .flms-jersey-label { font-size: inherit; }
+.fs-score-box { font-size: 48px; font-weight: 800; color: var(--flms-white); text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+.fs-status.full-time { color: var(--flms-gold); font-weight: 700; }
+@media (max-width: 600px) { .fs-board { flex-direction: column; gap: 20px; } }
+
+/* Highlights */
+.flms-highlights-scroll { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; width: 100%; }
+.highlight-card { position: relative; height: 200px; overflow: hidden; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+.hl-link { display: block; height: 100%; width: 100%; text-decoration: none; }
+.hl-img { width: 100%; height: 100%; background-size: cover; background-position: center; transition: transform 0.3s; }
+.highlight-card:hover .hl-img { transform: scale(1.1); }
+.hl-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+.highlight-card:hover .hl-overlay { opacity: 1; }
+.hl-icon { background: rgba(0,0,0,0.8); color: var(--flms-gold); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 800; text-transform: uppercase; }
+.hl-info { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(to top, rgba(0,0,0,0.9), transparent); padding: 20px; color: #fff; pointer-events: none; }
+.hl-teams { display: block; font-weight: 700; font-size: 14px; text-shadow: 0 1px 3px #000; margin-bottom: 5px; }
+.hl-score { color: var(--flms-gold); font-weight: 900; font-size: 16px; }
+
+/* =========================================
+   7. COMPETITIONS GRID
+   ========================================= */
+.flms-comp-wrapper { width: 100%; padding: 20px 0; }
+.comp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px; width: 100%; }
+
+.comp-card {
+    background-color: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease;
+    border: 1px solid #eee;
+    display: flex; flex-direction: column; height: 100%;
+    position: relative !important; z-index: 1;
+}
+.comp-card:hover { transform: translateY(-5px); border-color: var(--flms-gold); }
+.comp-img { height: 180px; background: #1c1c1c; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+.comp-img img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition:0.3s; }
+.comp-card:hover .comp-img img { opacity: 0.5; }
+
+.comp-status { 
+    position: absolute; top: 15px; left: 15px; padding: 4px 10px; border-radius: 20px; 
+    font-size: 10px; font-weight: 800; text-transform: uppercase; color: #fff; letter-spacing: 1px; z-index: 10;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.status-active { background: #2ecc71; }
+.status-upcoming { background: var(--flms-gold); color: var(--flms-black); }
+.status-ended { background: #95a5a6; }
+
+.comp-body { padding: 20px; flex-grow: 1; }
+.comp-body h3 { margin: 0 0 8px 0; font-size: 16px; color: var(--flms-black); }
+.comp-meta { color: #777; font-size: 12px; margin-bottom: 15px; }
+.comp-footer { padding: 0 20px 20px 20px; margin-top: auto; }
+
+.btn-view { display: block; text-align: center; background: var(--flms-black); color: var(--flms-gold); padding: 10px; text-decoration: none; font-weight: 700; border-radius: 4px; text-transform: uppercase; font-size: 12px; transition: 0.2s; }
+.btn-view:hover { background: var(--flms-gold); color: var(--flms-black); }
+
+/* Tabs */
+.flms-tabs-filter-bar { display: flex; align-items: center; border-bottom: 2px solid #eee; margin-bottom: 30px; padding-bottom: 0; gap: 15px; flex-wrap: wrap; }
+a.tab-filter-btn { text-decoration: none; font-size: 14px; font-weight: 700; color: #000; padding: 12px 5px; border-bottom: 3px solid transparent; text-transform: uppercase; letter-spacing: 0.5px; }
+a.tab-filter-btn:hover { color: var(--flms-black); }
+a.tab-filter-btn.active { color: #B5952F!important; border-bottom-color: var(--flms-gold); }
+
+.flms-tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    /* Dark inbox header needs high contrast */
+    background: rgba(0,0,0,0.65);
+    color: var(--flms-gold);
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    font-size: 12px;
+    font-weight: 800;
+    margin-left: 8px;
+}
+
+.flms-tab-badge-announcement {
+    /* Match Notification-style count (gold + dark background) */
+    background: rgba(212, 175, 55, 0.10);
+    color: var(--flms-gold);
+    border: 1px solid rgba(212, 175, 55, 0.25);
+}
+/* Tournaments list page: tab bar font white */
+.flms-comp-wrapper .flms-tabs-filter-bar,
+.flms-comp-wrapper .flms-tabs-filter-bar .tab-filter-btn { color: #fff; }
+.flms-comp-wrapper .flms-tabs-filter-bar .tab-filter-btn:hover { color: rgba(255,255,255,0.9); }
+.flms-comp-wrapper .flms-tabs-filter-bar .tab-filter-btn.active { color: var(--flms-gold) !important; border-bottom-color: var(--flms-gold); }
+.flms-comp-wrapper .flms-tabs-filter-bar { border-bottom-color: rgba(255,255,255,0.2); }
+.flms-search-box { margin-left: auto; }
+.flms-search-box input { padding: 8px 15px; border: 1px solid #000; border-radius: 50px; width: 220px; outline: none; }
+
+/* =========================================
+   8. SIDEBAR WIDGETS
+   ========================================= */
+.stats-widget .gb-title { display: none !important; }
+.stats-widget .flms-top-scorers, .stats-widget .flms-table-responsive { width: 100% !important; box-shadow: none !important; margin: 0 !important; border: none !important; }
+.flms-side-col .flms-league-table { table-layout: fixed; width: 100%; }
+.flms-side-col .flms-league-table td.club { max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12px !important; }
+.flms-side-col .flms-league-table th, .flms-side-col .flms-league-table td { padding: 8px 4px !important; font-size: 12px !important; }
+
+/* Hide Extra Columns in Sidebar */
+.stats-widget .flms-golden-boot th:nth-child(3), .stats-widget .flms-golden-boot td:nth-child(3),
+.stats-widget .flms-league-table th:nth-child(n+3):nth-child(-n+9),
+.stats-widget .flms-league-table td:nth-child(n+3):nth-child(-n+9),
+.stats-widget .flms-league-table .form { display: none !important; }
+
+.stats-widget .flms-golden-boot th:first-child, .stats-widget .flms-league-table th:first-child { width: 40px !important; }
+.stats-widget .flms-golden-boot th:last-child, .stats-widget .flms-league-table th:last-child { width: 40px !important; text-align: center; }
+
+/* =========================================
+   9. CLEANUP DEFAULTS (Force Hide)
+   ========================================= */
+.woocommerce-breadcrumb, nav.woocommerce-breadcrumb, .product_meta, .woocommerce div.product .product_title, .product .entry-title, .entry-summary > form.cart, .single-product-category, .posted_in, .tagged_as, .product .price, .summary .price, .woocommerce-product-details__short-description, .summary > .tour-status, .product .tour-status, header.entry-header, .entry-meta { display: none !important; }
+.flms-tour-hero, .flms-hub-wrapper, .flms-reg-layout { width: 100% !important; max-width: 100% !important; }
+
+/* =========================================
+   10. MOBILE RESPONSIVENESS (BREAKPOINTS)
+   ========================================= */
+@media (max-width: 1024px) {
+    .comp-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 768px) {
+    /* 1. Global Font Sizing */
+    body, p, td, th, div, span, a { font-size: 13px !important; line-height: 1.4 !important; }
+    h1, h2, h3, h4 { font-size: 16px !important; line-height: 1.3 !important; }
+    
+    /* 2. Containers */
+    .flms-dashboard-wrapper, .flms-player-card, .flms-referee-dash, .comp-card { 
+        padding: 15px !important; 
+    }
+    
+    /* 3. Match List Mobile Stack */
+    .flms-fixture-row {
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        padding: 15px !important;
+        height: auto !important;
+        gap: 15px !important;
+    }
+    .match-meta {
+        width: 100% !important;
+        border-right: none !important;
+        border-bottom: 1px solid #f5f5f5;
+        padding-bottom: 10px;
+        margin-bottom: 5px;
+        margin-right: 0 !important;
+        flex-direction: row !important;
+        justify-content: center !important;
+        gap: 15px;
+    }
+    .match-teams { 
+        width: 100% !important; 
+        flex-direction: column !important;
+        gap: 10px !important;
+    }
+    .team { 
+        width: 100% !important; 
+        justify-content: center !important; 
+        text-align: center !important; 
+    }
+    .team.home, .team.away { text-align: center !important; justify-content: center !important; }
+    .t-name { max-width: 100%; }
+    .score, .vs-badge { margin: 5px auto !important; }
+    
+    /* 4. Competitions Grid */
+    .comp-grid { grid-template-columns: 1fr; }
+    .flms-tabs-filter-bar { flex-direction: column; align-items: stretch; gap: 10px; }
+    .flms-search-box { margin-left: 0; width: 100%; }
+    .flms-search-box input { width: 100%; }
+
+    /* 5. TABLES: SHOW ALL DATA (SCROLLABLE) */
+    .flms-table-responsive { 
+        overflow-x: auto !important; 
+        display: block !important; 
+        width: 100%; 
+        border: 1px solid #eee;
+        -webkit-overflow-scrolling: touch; /* Smooth scroll on iOS */
+    }
+    
+    .flms-league-table { 
+        min-width: 900px; /* Force table to be wide enough to show all stats */
+        width: 100%; 
+    }
+
+    /* SHOW ALL COLUMNS (Reset any display:none) */
+    .flms-league-table th, 
+    .flms-league-table td {
+        display: table-cell !important; 
+    }
+    
+    /* UN-FREEZE NAME COLUMN (Remove Sticky) */
+    .flms-player-table th:nth-child(3), 
+    .flms-player-table td:nth-child(3) { 
+        position: static !important; 
+        background: transparent !important;
+        border-right: 1px solid #eee !important;
+    }
+
+    /* 6. Player Card Profile */
+    .flms-player-header { flex-direction: column; text-align: center; }
+    .flms-stats-grid { grid-template-columns: 1fr 1fr; }
+    
+    /* 7. Sidebar */
+    .flms-side-col { width: 100% !important; padding: 0; }
+    .flms-home-grid { flex-direction: column; }
+    .flms-side-col .flms-table-responsive { overflow-x: auto !important; display: block; width: 100%; }
+}
+
+/* ========================================= 11. MOBILE & TABLET BOTTOM MENU ========================================= */ .flms-mobile-nav { display: none; } /* CHANGED: max-width 1024px covers iPads and Tablets */ @media (max-width: 1024px) { /* Add padding to body so content isn't hidden behind the menu */ body { padding-bottom: 80px !important; } .flms-mobile-nav { display: flex; justify-content: space-between; align-items: center; position: fixed; bottom: 0; left: 0; width: 100%; background-color: var(--flms-black); border-top: 3px solid var(--flms-gold); padding: 10px 0; z-index: 99999; box-shadow: 0 -5px 20px rgba(0,0,0,0.5); /* Support for iPhone/iPad Home Bar area */ padding-bottom: calc(10px + env(safe-area-inset-bottom)); } .mn-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: var(--flms-white); font-size: 10px; /* Slightly larger for tablets */ text-transform: uppercase; letter-spacing: 0.5px; transition: 0.2s; flex: 1; padding: 5px 0; } .mn-item svg { margin-bottom: 5px; width: 24px; /* Larger icons for tablets */ height: 24px; transition: 0.2s; } .mn-item:hover, .mn-item:active { color: var(--flms-white); } .mn-item:hover svg { fill: var(--flms-gold); transform: translateY(-3px); } }
+
+/* =========================================
+   FANTASY PREMIER LEAGUE STYLE TABLE (AGD THEME)
+   ========================================= */
+
+/* 1. Container & Scroll */
+.flms-directory-wrapper .flms-table-responsive {
+    border: none;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    background: #fff;
+    border-radius: 8px;
+}
+
+/* 2. Header Styling (FPL Vibe: Clean, Uppercase, Dark) */
+.flms-player-table thead tr {
+    background-color: var(--flms-black); /* AGD Black */
+    height: 50px;
+}
+
+.flms-player-table th {
+    color: var(--flms-gold); /* AGD Gold Text */
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    border-bottom: 3px solid var(--flms-gold);
+    vertical-align: middle;
+    padding: 10px;
+}
+
+/* Sortable Links in Header */
+.flms-player-table th a.sort-link {
+    color: #fff;
+    text-decoration: none;
+}
+.flms-player-table th a.sort-link.active {
+    color: var(--flms-gold);
+}
+
+/* 3. Row Styling (Clean White & Grey) */
+.flms-player-table tbody tr {
+    height: 60px; /* Taller rows like FPL */
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.1s;
+}
+
+.flms-player-table tbody tr:hover {
+    background-color: #fafafa;
+}
+
+.flms-player-table td {
+    vertical-align: middle;
+    padding: 10px;
+    color: #333;
+    font-size: 14px;
+    border: none;
+}
+
+/* 4. PLAYER NAME (The "Must Be Full" Fix) */
+.flms-player-table td.player-name {
+    text-align: left;
+    min-width: 220px; /* Force it to be wide enough for full names */
+    white-space: nowrap; /* Never wrap to second line */
+    font-weight: 800;
+}
+
+.flms-player-table td.player-name a {
+    color: var(--flms-black);
+    font-size: 15px;
+}
+
+/* 5. Team & Position (Subtle) */
+.flms-player-table td.player-team {
+    font-size: 13px;
+    color: #666;
+    min-width: 150px;
+    white-space: nowrap;
+}
+
+.flms-player-table .pos-badge {
+    background: var(--flms-black);
+    color: var(--flms-gold);
+    font-size: 10px;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* 6. STATS COLUMNS (FPL Style Numbers) */
+.flms-player-table td.stat-goal,
+.flms-player-table td.stat-yellow,
+.flms-player-table td.stat-red,
+.flms-player-table td:nth-child(6), /* Apps */
+.flms-player-table td:nth-child(8), /* Assists */
+.flms-player-table td:nth-child(9)  /* Clean Sheets */ 
+{
+    font-weight: 500;
+    font-size: 15px;
+    color: #555;
+    text-align: center;
+}
+
+/* Points Column (Highlighted) */
+.flms-player-table td.stat-points {
+    background-color: #f9f9f9;
+    font-weight: 900;
+    font-size: 16px;
+    color: var(--flms-black);
+    border-left: 1px solid #eee;
+}
+
+/* 7. Image (Avatar) */
+.dir-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%; /* Circle */
+    border: 2px solid #eee;
+    background: #fff;
+    object-fit: cover;
+}
+
+/* --- MOBILE SPECIFIC (Scrollable, Full Names) --- */
+@media (max-width: 768px) {
+    .flms-directory-wrapper .flms-table-responsive {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        display: block;
+    }
+
+    .flms-player-table {
+        min-width: 1000px; /* Force table to be very wide so nothing squishes */
+    }
+
+    /* Keep Name visible and full */
+    .flms-player-table td.player-name {
+        position: static; /* No freeze as requested */
+        font-size: 14px;
+    }
+}
+
+/* =========================================
+   FIX: FPL STYLE STANDINGS (Full Team Names)
+   ========================================= */
+
+/* 1. Reset Table Layout for FPL Style */
+.flms-hub-wrapper .flms-league-table {
+    table-layout: auto !important; /* Allow columns to expand naturally */
+    white-space: nowrap; /* Keep rows on one line */
+}
+
+/* 2. Header Styling (The FPL Look) */
+.flms-hub-wrapper .flms-league-table thead tr {
+    height: 45px;
+    background-color: var(--flms-black);
+    border-bottom: 3px solid var(--flms-gold);
+}
+
+.flms-hub-wrapper .flms-league-table th {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--flms-white);
+    font-weight: 700;
+    padding: 0 10px;
+    border: none;
+}
+
+/* Highlight specific headers */
+.flms-hub-wrapper .flms-league-table th.club { color: var(--flms-white); }
+.flms-hub-wrapper .flms-league-table th.pts { color: var(--flms-gold); }
+
+/* 3. Row Styling */
+.flms-hub-wrapper .flms-league-table tbody tr {
+    height: 55px; /* Taller rows for pro look */
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.1s;
+}
+.flms-hub-wrapper .flms-league-table tbody tr:hover {
+    background-color: #fafafa;
+}
+
+/* 4. CLUB NAME (The Critical Fix) */
+.flms-hub-wrapper .flms-league-table td.club {
+    text-align: left;
+    min-width: 250px !important; /* Force wide area */
+    max-width: none !important;  /* Remove limits */
+    overflow: visible !important; /* Show full text */
+    white-space: nowrap !important; /* Don't wrap */
+    
+    font-size: 15px !important;
+    font-weight: 800 !important; /* Bold like FPL */
+    color: var(--flms-black);
+}
+
+.team-table-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+/* 5. Rank Column */
+.flms-hub-wrapper .flms-league-table td.pos {
+    font-size: 16px;
+    color: #333;
+    width: 50px;
+}
+
+/* 6. Points Column (Highlighted) */
+.flms-hub-wrapper .flms-league-table td.pts {
+    background-color: transparent !important; /* Clean look */
+    font-weight: 900;
+    font-size: 16px;
+    color: var(--flms-black);
+    width: 60px;
+}
+
+/* 7. Stats Columns (P, W, D, L...) */
+.flms-hub-wrapper .flms-league-table td:not(.club):not(.pos):not(.pts):not(.form) {
+    font-size: 14px;
+    color: #666;
+    width: 40px; /* Fixed width for numbers */
+}
+
+/* 8. Mobile Scroll Fix */
+@media (max-width: 768px) {
+    /* Force container to scroll horizontally */
+    .flms-hub-wrapper #tab-standings .flms-table-responsive {
+        display: block !important;
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Ensure table is wide enough to trigger scroll */
+    .flms-hub-wrapper .flms-league-table {
+        min-width: 900px !important; 
+    }
+    
+    /* Ensure all columns are visible on mobile (scroll to see) */
+    .flms-hub-wrapper .flms-league-table th,
+    .flms-hub-wrapper .flms-league-table td {
+        display: table-cell !important;
+    }
+}
+
+/* =========================================
+   FIX: TOURNAMENT PAGE TABS & MATCH NAMES
+   ========================================= */
+
+/* 1. FIX MATCH TEAM NAMES (Make them visible) */
+.flms-hub-wrapper .t-name {
+    color: var(--flms-black) !important; /* Force Black Text */
+    opacity: 1 !important;
+    font-weight: 700 !important;
+    display: inline-block !important;
+    
+    /* Allow width to expand */
+    width: auto !important; 
+    min-width: 50px !important; 
+    max-width: 100% !important;
+    
+    /* Ensure it doesn't collapse */
+    flex-shrink: 0 !important; 
+    white-space: normal !important; /* Allow wrapping on mobile if needed */
+}
+
+/* Ensure Links inside are block level */
+.flms-match-link {
+    display: flex !important;
+    width: 100%;
+    text-decoration: none;
+}
+
+/* 2. FIX TABS ON MOBILE (Smaller & Scrollable) */
+@media (max-width: 768px) {
+    .flms-tabs {
+        display: flex !important;
+        flex-wrap: nowrap !important; /* Keep in one line */
+        overflow-x: auto !important;  /* Allow horizontal scroll if needed */
+        -webkit-overflow-scrolling: touch;
+        gap: 0 !important;
+        border-bottom: 2px solid #eee;
+    }
+
+    .flms-tabs .tab-btn {
+        font-size: 13px !important; /* Smaller Font */
+        padding: 10px 15px !important; /* Smaller Padding */
+        flex: 0 0 auto; /* Don't squash buttons */
+        white-space: nowrap;
+    }
+
+    /* Remove scrollbar for cleaner look */
+    .flms-tabs::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* =========================================
+   FIX: MOBILE MATCH LIST (FIT SCREEN)
+   ========================================= */
+
+@media (max-width: 768px) {
+
+    /* 1. Main Row: Stack Date on Top, Teams Below */
+    .flms-fixture-row,
+    .flms-fixture-row > a.flms-match-link {
+        flex-direction: column !important;
+        height: auto !important;
+        padding: 10px 5px !important;
+        align-items: stretch !important;
+    }
+
+    /* 2. Date Section: Small row at the top */
+    .match-meta {
+        width: 100% !important;
+        flex-direction: row !important;
+        justify-content: center !important;
+        gap: 10px;
+        border-right: none !important;
+        border-bottom: 1px solid #f0f0f0;
+        padding: 0 0 8px 0 !important;
+        margin: 0 0 10px 0 !important;
+    }
+    
+    .m-date, .m-time {
+        font-size: 11px !important;
+        display: inline-block !important;
+        margin: 0 !important;
+    }
+    .m-venue {
+        width: 100%;
+        text-align: center;
+        margin-top: 4px !important;
+        display: block !important;
+    }
+
+    /* 3. Teams Container: Row layout (Home - VS - Away) */
+    .match-teams {
+        width: 100% !important;
+        flex-direction: row !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 5px !important;
+    }
+
+    /* 4. Individual Team: Allow text to wrap & shrink */
+    .team {
+        width: 40% !important; /* Force width */
+        font-size: 11px !important; /* Small Font */
+        line-height: 1.2 !important;
+        flex-direction: column !important; /* Logo on top of name */
+        justify-content: center !important;
+        text-align: center !important;
+        gap: 5px !important;
+        white-space: normal !important; /* Allow text wrapping */
+    }
+
+    /* Reset Alignments for Mobile Stack */
+    .team.home, .team.away {
+        text-align: center !important;
+        justify-content: flex-start !important;
+    }
+
+    /* 5. Team Name: Visible & Wrap */
+    .t-name {
+        max-width: 100% !important;
+        white-space: normal !important; /* Key fix: allows multi-line text */
+        overflow: visible !important;
+        display: block !important;
+        color: #000 !important; /* Ensure it's black, not white */
+    }
+
+    /* 6. Logo Size: Smaller */
+    .t-logo {
+        width: 30px !important;
+        height: 30px !important;
+        min-width: 30px !important;
+        margin: 0 !important;
+    }
+
+    /* 7. Center Score/VS */
+    .vs-badge, .score {
+        width: 40px !important;
+        font-size: 12px !important;
+        padding: 4px 0 !important;
+        margin: 0 !important;
+    }
+}
+
+/* =========================================
+   MATCHWEEK NAVIGATION (PL Style)
+   ========================================= */
+
+.flms-round-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.02);
+}
+
+.nav-item {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.nav-item.center {
+    justify-content: center;
+    flex-direction: column;
+}
+
+.nav-item.left { justify-content: flex-start; }
+.nav-item.right { justify-content: flex-end; }
+
+/* Arrows */
+.nav-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: #f4f4f4;
+    color: #333;
+    text-decoration: none;
+    font-weight: bold;
+    font-size: 18px;
+    transition: 0.2s;
+}
+
+.nav-arrow:hover {
+    background: var(--flms-gold);
+    color: var(--flms-black);
+}
+
+.nav-arrow.disabled {
+    opacity: 0.3;
+    cursor: default;
+    pointer-events: none;
+}
+
+/* Text */
+.round-label {
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--flms-black);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.round-date-range {
+    font-size: 12px;
+    color: #888;
+    margin-top: 2px;
+}
+
+/* Mobile Tweak */
+@media (max-width: 600px) {
+    .flms-round-nav { padding: 10px; }
+    .round-label { font-size: 15px; }
+    .nav-arrow { width: 32px; height: 32px; font-size: 14px; }
+}
+
+/* Cleanup: Remove old round headers inside list */
+.flms-match-list .flms-round-title { display: none; }
+ul.flms-fixtures-list { padding: 0; margin: 0; list-style: none; }
+
+
+/* =========================================
+   FIX: EPL STYLE MATCH TIMELINE
+   ========================================= */
+
+.flms-epl-timeline {
+    position: relative;
+    padding: 20px 0;
+    margin-top: 20px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+}
+
+/* Center Line */
+.timeline-line {
+    position: absolute;
+    top: 20px;
+    bottom: 20px;
+    left: 50%;
+    width: 2px;
+    background: #f0f0f0;
+    transform: translateX(-50%);
+    z-index: 1;
+}
+
+/* Row Container */
+.tl-row {
+    display: flex;
+    align-items: center;
+    position: relative;
+    margin-bottom: 15px;
+    z-index: 2; /* Sit above the line */
+}
+
+/* Sides */
+.tl-side {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 5px 20px;
+}
+
+.tl-side.home {
+    justify-content: flex-end; /* Home pushes right towards center */
+    text-align: right;
+}
+
+.tl-side.away {
+    justify-content: flex-start; /* Away pushes left towards center */
+    text-align: left;
+}
+
+/* The Time Bubble (Center) */
+.tl-time {
+    width: 40px;
+    height: 40px;
+    background: #fff;
+    border: 2px solid var(--flms-black); /* Black Border */
+    color: var(--flms-black);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    box-shadow: 0 0 0 5px #fff; /* White halo to hide the line behind it */
+}
+
+.min-mark { font-size: 10px; margin-left: 1px; }
+
+/* Text & Icons */
+.tl-player {
+    font-weight: 700;
+    color: #333;
+    font-size: 15px;
+}
+
+.tl-icon {
+    font-size: 16px;
+    display: inline-block;
+    margin: 0 10px;
+    min-width: 20px;
+    text-align: center;
+}
+
+/* Card Styling */
+.card {
+    display: inline-block;
+    width: 14px;
+    height: 20px;
+    border-radius: 2px;
+    box-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    vertical-align: middle;
+}
+.yellow-card { background-color: #ffeb3b; }
+.red-card { background-color: #ff3b30; }
+
+/* Mobile Responsiveness for Timeline */
+@media (max-width: 600px) {
+    .tl-player { font-size: 13px; }
+    .tl-side { padding: 0 10px; }
+    
+    .timeline-line { display: none; } /* Hide line on very small screens if cluttered */
+    .tl-time {
+        width: 35px; height: 35px; font-size: 12px;
+        background: #f4f4f4; border: none;
+    }
+}
+
+/* Upload Button Style */
+.upload-icon-btn {
+    cursor: pointer;
+    background: #f0f0f0;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 16px;
+    line-height: 1;
+    border: 1px solid #000;
+    display: inline-block;
+    transition: 0.2s;
+}
+.upload-icon-btn:hover {
+    background: #e0e0e0;
+}
+.upload-icon-btn input {
+    display: none;
+}
+
+/* =========================================
+   HOMEPAGE MULTI-VIEW (Tabs + Split Grid)
+   ========================================= */
+
+.flms-multi-view-wrapper {
+    margin-bottom: 50px;
+    width: 100%;
+}
+
+/* 1. Tabs Header */
+.flms-mv-header {
+    border-bottom: 2px solid #000;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.flms-mv-tabs {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+}
+
+.mv-tab-btn {
+    background: #e0e0e0 !important;
+    border: none !important;
+    padding: 12px 20px !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    color: #555 !important;
+    cursor: pointer;
+    border-radius: 6px 6px 0 0 !important;
+    text-transform: uppercase;
+    transition: 0.2s;
+    white-space: nowrap;
+}
+
+.mv-tab-btn.active {
+    background: #000 !important; /* Black Active Tab */
+    color: #D4AF37 !important;    /* Gold Text */
+}
+
+.mv-tab-btn:hover {
+    background: #000 !important;
+}
+
+/* 2. Split Layout Container */
+.mv-pane.split-layout {
+    display: flex;
+    gap: 30px;
+    animation: flmsFadeIn 0.3s ease-out;
+}
+
+/* Left Column (Matches) */
+.mv-col-left {
+    flex: 2; /* Takes 66% width */
+}
+
+/* Right Column (Standings) */
+.mv-col-right {
+    flex: 1; /* Takes 33% width */
+    min-width: 300px;
+}
+
+/* Section Headers inside the pane */
+.mv-section-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 5px;
+}
+
+.mv-section-head h3 {
+    margin: 0;
+    font-size: 18px;
+    text-transform: uppercase;
+    color: #fff;
+    border-left: 4px solid #D4AF37;
+    padding-left: 10px;
+}
+
+.mv-link {
+    font-size: 12px;
+    font-weight: 700;
+    color: #D4AF37;
+    text-decoration: none;
+    text-transform: uppercase;
+}
+
+/* Right Column Box Styling */
+.mv-table-box {
+    background: #fff;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.mv-small-link {
+    font-size: 11px;
+    color: #000;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+/* 3. Mobile Responsiveness */
+@media (max-width: 900px) {
+    .mv-pane.split-layout {
+        flex-direction: column; /* Stack them */
+    }
+    
+    .mv-col-left, .mv-col-right {
+        width: 100%;
+        flex: auto;
+    }
+    
+    .mv-col-right {
+        margin-top: 20px;
+    }
+}
+
+/* =========================================
+   MULTI-VIEW UPDATES
+   ========================================= */
+
+/* Header Styling */
+.flms-mv-title {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--flms-black);
+    text-transform: uppercase;
+    margin-right: 20px;
+}
+
+/* Full Width Layout (Matches Only or Standings Only) */
+.mv-pane.full-layout {
+    width: 100%;
+    animation: flmsFadeIn 0.3s ease-out;
+}
+
+.mv-full-content {
+    width: 100%;
+}
+
+/* Ensure tabs align nicely if title exists */
+.flms-mv-header {
+    align-items: center; /* Vertically center title and tabs */
+}
+
+.flms-directory-wrapper form {
+    display: flex !important;
+}
+button.search-btn {
+    padding: 10px 30px;
+}
+
+/* =========================================
+   FRIENDLY MATCH (Unified UI)
+   ========================================= */
+.flms-friendly-create,
+.flms-friendly-inbox,
+.flms-team-directory,
+.flms-player-directory {
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+/* Friendly pages – nav links (Inbox / Create Friendly Match) */
+.flms-friendly-nav {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 24px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+
+.flms-friendly-nav-link {
+    display: inline-block;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #666;
+    border-radius: 8px;
+    transition: color 0.2s, background 0.2s;
+}
+
+.flms-friendly-nav-link:hover {
+    color: var(--flms-black);
+    background: rgba(0,0,0,0.04);
+}
+
+.flms-friendly-nav-link.active {
+    color: var(--flms-gold);
+    background: rgba(212, 175, 55, 0.08);
+}
+
+/* Tidy spacing on friendly pages */
+.flms-friendly-create .flms-section-title,
+.flms-friendly-inbox .flms-section-title {
+    margin-top: 0;
+}
+
+.flms-friendly-create .flms-desc {
+    margin-bottom: 20px;
+}
+
+/* =========================================
+   FRIENDLY PAGES – Premium EPL Dark Mode
+   Inbox, Create Friendly, Match Details
+   Same style as Player/Team Directory & Player Details
+   ========================================= */
+.flms-friendly-create.dark-mode,
+.flms-friendly-inbox.dark-mode,
+.flms-friendly-match-details.dark-mode {
+    background: linear-gradient(180deg, #0a0a0a 0%, #111 50%, #0d0d0d 100%);
+    padding: 32px 36px 40px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.06);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 1px rgba(212, 175, 55, 0.08);
+    color: rgba(255,255,255,0.92);
+}
+
+.flms-friendly-create.dark-mode .flms-section-title,
+.flms-friendly-inbox.dark-mode .flms-section-title,
+.flms-friendly-match-details.dark-mode .flms-section-title {
+    color: var(--flms-gold);
+    border-left-color: var(--flms-gold);
+    font-size: 20px;
+}
+
+.flms-friendly-create.dark-mode .flms-desc {
+    color: rgba(255,255,255,0.7);
+}
+
+.flms-friendly-create.dark-mode .flms-notice-success,
+.flms-friendly-inbox.dark-mode .flms-notice-success,
+.flms-friendly-match-details.dark-mode .flms-notice-success {
+    background: rgba(46, 204, 113, 0.15);
+    border: 1px solid rgba(46, 204, 113, 0.4);
+    color: #7bed9f;
+}
+
+.flms-friendly-create.dark-mode .flms-error,
+.flms-friendly-inbox.dark-mode .flms-error,
+.flms-friendly-match-details.dark-mode .flms-error {
+    background: rgba(231, 76, 60, 0.15);
+    border: 1px solid rgba(231, 76, 60, 0.4);
+    color: #ff6b6b;
+}
+
+/* Roster / Form Section */
+.flms-friendly-create.dark-mode .flms-roster-section {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 24px 28px;
+}
+
+.flms-friendly-create.dark-mode .form-group label,
+.flms-friendly-inbox.dark-mode .form-group label {
+    color: var(--flms-gold);
+}
+
+.flms-friendly-create.dark-mode input,
+.flms-friendly-create.dark-mode select,
+.flms-friendly-inbox.dark-mode input,
+.flms-friendly-inbox.dark-mode select,
+.flms-friendly-match-details.dark-mode input,
+.flms-friendly-match-details.dark-mode select,
+.flms-friendly-match-details.dark-mode textarea {
+    background: rgba(0,0,0,0.35) !important;
+    border: 1px solid rgba(212, 175, 55, 0.35) !important;
+    color: #fff !important;
+}
+
+.flms-friendly-create.dark-mode input:focus,
+.flms-friendly-create.dark-mode select:focus,
+.flms-friendly-inbox.dark-mode input:focus,
+.flms-friendly-inbox.dark-mode select:focus,
+.flms-friendly-match-details.dark-mode input:focus,
+.flms-friendly-match-details.dark-mode select:focus,
+.flms-friendly-match-details.dark-mode textarea:focus {
+    outline: none !important;
+    border-color: var(--flms-gold) !important;
+    box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2) !important;
+}
+
+/* Date/time: native calendar & clock icons (default black) are invisible on dark fields */
+.flms-friendly-create.dark-mode input[type="date"],
+.flms-friendly-create.dark-mode input[type="time"],
+.flms-friendly-inbox.dark-mode input[type="date"],
+.flms-friendly-inbox.dark-mode input[type="time"],
+.flms-friendly-match-details.dark-mode input[type="date"],
+.flms-friendly-match-details.dark-mode input[type="time"] {
+    color-scheme: dark;
+}
+.flms-friendly-create.dark-mode input[type="date"]::-webkit-calendar-picker-indicator,
+.flms-friendly-create.dark-mode input[type="time"]::-webkit-calendar-picker-indicator,
+.flms-friendly-inbox.dark-mode input[type="date"]::-webkit-calendar-picker-indicator,
+.flms-friendly-inbox.dark-mode input[type="time"]::-webkit-calendar-picker-indicator,
+.flms-friendly-match-details.dark-mode input[type="date"]::-webkit-calendar-picker-indicator,
+.flms-friendly-match-details.dark-mode input[type="time"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.15);
+    opacity: 0.95;
+    cursor: pointer;
+}
+
+.flms-friendly-create.dark-mode .button-primary,
+.flms-friendly-create.dark-mode .btn-gold,
+.flms-friendly-inbox.dark-mode .button,
+.flms-friendly-inbox.dark-mode .btn-gold,
+.flms-friendly-match-details.dark-mode .button,
+.flms-friendly-match-details.dark-mode .btn-gold {
+    background: var(--flms-gold) !important;
+    color: var(--flms-black) !important;
+    border: none !important;
+    font-weight: 800 !important;
+}
+
+.flms-friendly-inbox.dark-mode .btn-green {
+    background: #2ecc71 !important;
+    color: #fff !important;
+}
+
+/* Tabs */
+.flms-friendly-inbox.dark-mode .flms-tabs-filter-bar {
+    border-bottom-color: rgba(255,255,255,0.1);
+}
+
+.flms-friendly-inbox.dark-mode .tab-filter-btn {
+    color: rgba(255,255,255,0.6);
+}
+
+.flms-friendly-inbox.dark-mode .tab-filter-btn:hover {
+    color: #fff;
+}
+
+.flms-friendly-inbox.dark-mode .tab-filter-btn.active {
+    color: var(--flms-gold) !important;
+    border-bottom-color: var(--flms-gold);
+}
+
+/* Tables – white background for contrast */
+.flms-friendly-inbox.dark-mode .flms-table-responsive {
+    background: #fff !important;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.flms-friendly-inbox.dark-mode .flms-league-table thead tr {
+    background: var(--flms-black) !important;
+    border-bottom: 3px solid var(--flms-gold);
+}
+
+.flms-friendly-inbox.dark-mode .flms-league-table th {
+    color: var(--flms-gold) !important;
+}
+
+.flms-friendly-inbox.dark-mode .flms-league-table tbody tr {
+    background: #fff !important;
+}
+
+.flms-friendly-inbox.dark-mode .flms-league-table td {
+    color: #1a1a1a !important;
+    border-bottom-color: rgba(0,0,0,0.08) !important;
+}
+
+.flms-friendly-inbox.dark-mode .flms-league-table tbody tr:hover {
+    background: #f8f8f8 !important;
+}
+
+.flms-friendly-inbox.dark-mode .flms-league-table tbody tr td a {
+    color: #0066cc;
+}
+
+/* Empty box & slot cards */
+.flms-friendly-inbox.dark-mode .flms-empty-box {
+    background: rgba(255,255,255,0.05);
+    border: 1px dashed rgba(212, 175, 55, 0.3);
+    color: rgba(255,255,255,0.6);
+}
+
+.flms-friendly-inbox.dark-mode .flms-friendly-slot-card {
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-top: 4px solid var(--flms-gold);
+}
+
+.flms-friendly-inbox.dark-mode .flms-slot-header,
+.flms-friendly-inbox.dark-mode .flms-slot-sub {
+    color: rgba(255,255,255,0.9);
+}
+
+.flms-friendly-inbox.dark-mode .flms-slot-sub {
+    color: rgba(255,255,255,0.65);
+}
+
+/* Notifications */
+.flms-friendly-inbox.dark-mode .flms-notif-item {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Match Details Page */
+.flms-friendly-match-details.dark-mode .flms-friendly-detail-grid {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    padding: 20px 24px !important;
+    border-radius: 12px !important;
+}
+
+.flms-friendly-match-details.dark-mode .flms-friendly-detail-grid p,
+.flms-friendly-match-details.dark-mode .flms-friendly-detail-grid strong {
+    color: rgba(255,255,255,0.9);
+}
+
+.flms-friendly-match-details.dark-mode .flms-friendly-detail-grid a {
+    color: var(--flms-gold);
+}
+
+.flms-friendly-match-details.dark-mode .flms-friendly-result-form {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1px solid rgba(255,255,255,0.1) !important;
+}
+
+.flms-friendly-match-details.dark-mode .flms-friendly-result-form h3,
+.flms-friendly-match-details.dark-mode .flms-friendly-rating h3,
+.flms-friendly-match-details.dark-mode .flms-friendly-comments h3,
+.flms-friendly-match-details.dark-mode .flms-friendly-rate-comment h3,
+.flms-friendly-match-details.dark-mode .comment-reply-title {
+    color: #fff;
+}
+
+.flms-friendly-match-details.dark-mode .flms-friendly-rating,
+.flms-friendly-match-details.dark-mode .flms-friendly-comments,
+.flms-friendly-match-details.dark-mode .flms-friendly-rate-comment {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.flms-friendly-match-details.dark-mode .flms-avg-rating,
+.flms-friendly-match-details.dark-mode .flms-comment-rating-field label {
+    color: #fff;
+}
+
+.flms-friendly-match-details.dark-mode .flms-comment-rating-field select {
+    color: #fff;
+    background: rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.flms-friendly-match-details.dark-mode .flms-comment-item {
+    background: rgba(255,255,255,0.05) !important;
+    border-color: rgba(255,255,255,0.06) !important;
+}
+
+.flms-friendly-match-details.dark-mode .flms-muted {
+    color: rgba(255,255,255,0.5);
+}
+
+.flms-friendly-match-details.dark-mode p {
+    color: rgba(255,255,255,0.85);
+}
+
+.flms-friendly-match-details.dark-mode .flms-error a {
+    color: var(--flms-gold);
+}
+
+.flms-friendly-inbox.dark-mode .btn-tiny {
+    background: var(--flms-gold) !important;
+    color: var(--flms-black) !important;
+}
+
+@media (max-width: 768px) {
+    .flms-friendly-create.dark-mode,
+    .flms-friendly-inbox.dark-mode,
+    .flms-friendly-match-details.dark-mode {
+        padding: 20px 16px;
+    }
+}
+.flms-section-title {
+    margin: 0 0 15px 0;
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--flms-black);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-left: 4px solid var(--flms-gold);
+    padding-left: 12px;
+}
+
+/* =========================================
+   DIRECTORY PREMIUM (Premier League Style)
+   Player Directory & Team Directory
+   ========================================= */
+.flms-player-directory .flms-section-title,
+.flms-team-directory .flms-section-title {
+    font-size: 24px;
+    letter-spacing: 1px;
+    margin-bottom: 20px;
+    padding-left: 14px;
+    border-left-width: 5px;
+}
+.flms-player-directory .flms-directory-wrapper,
+.flms-team-directory .flms-directory-wrapper {
+    margin-bottom: 24px;
+    padding: 18px 20px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+    border: 1px solid rgba(0,0,0,0.06);
+}
+.flms-player-directory .flms-dir-search-form,
+.flms-team-directory .flms-dir-search-form {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+}
+.flms-player-directory .search-input,
+.flms-team-directory .search-input {
+    flex: 1;
+    min-width: 180px;
+    padding: 12px 16px;
+    font-size: 14px;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.flms-player-directory .search-input:focus,
+.flms-team-directory .search-input:focus {
+    outline: none;
+    border-color: rgba(212, 175, 55, 0.6);
+    box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
+}
+.flms-player-directory .search-input::placeholder,
+.flms-team-directory .search-input::placeholder {
+    color: #000;
+}
+.flms-player-directory .search-select,
+.flms-team-directory .search-select {
+    padding: 12px 36px 12px 16px;
+    font-size: 14px;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.flms-player-directory .search-select:focus,
+.flms-team-directory .search-select:focus {
+    outline: none;
+    border-color: rgba(212, 175, 55, 0.6);
+}
+.flms-player-directory .search-btn,
+.flms-team-directory .search-btn {
+    padding: 12px 24px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+    border-radius: 10px;
+    background: var(--flms-black);
+    color: var(--flms-gold);
+    transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+.flms-player-directory .search-btn:hover,
+.flms-team-directory .search-btn:hover {
+    background: var(--flms-gold);
+    color: var(--flms-black);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}
+.flms-player-directory .reset-link,
+.flms-team-directory .reset-link {
+    font-size: 12px;
+    color: #666;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+.flms-player-directory .reset-link:hover,
+.flms-team-directory .reset-link:hover {
+    color: var(--flms-black);
+    background: #f5f5f5;
+}
+.flms-player-directory .flms-table-responsive,
+.flms-team-directory .flms-table-responsive {
+    border-radius: 12px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+    border: 1px solid rgba(0,0,0,0.06);
+    overflow: hidden;
+}
+.flms-player-directory .flms-player-table tbody tr:nth-child(even),
+.flms-team-directory .flms-player-table tbody tr:nth-child(even) {
+    background: #fcfcfc;
+}
+.flms-player-directory .flms-player-table tbody tr:hover,
+.flms-team-directory .flms-player-table tbody tr:hover {
+    background: #f8f8f8 !important;
+}
+.flms-player-directory .flms-player-table thead tr,
+.flms-team-directory .flms-player-table thead tr {
+    height: 56px;
+}
+.flms-player-directory .flms-player-table th,
+.flms-team-directory .flms-player-table th {
+    font-size: 11px;
+    letter-spacing: 0.8px;
+    padding: 0 16px;
+}
+.flms-player-directory .flms-player-table td,
+.flms-team-directory .flms-player-table td {
+    padding: 14px 16px;
+    font-size: 14px;
+}
+.flms-player-directory .no-results,
+.flms-team-directory .no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #777;
+    background: #fafafa;
+    border-radius: 12px;
+    border: 1px dashed #e0e0e0;
+    font-size: 15px;
+}
+.flms-player-directory .flms-pagination,
+.flms-team-directory .flms-pagination {
+    margin-top: 32px;
+    margin-bottom: 40px;
+}
+.flms-player-directory .flms-pagination a,
+.flms-player-directory .flms-pagination span.current,
+.flms-team-directory .flms-pagination a,
+.flms-team-directory .flms-pagination span.current {
+    border-radius: 8px;
+    min-width: 44px;
+    height: 44px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.flms-desc {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 14px;
+}
+.flms-notice-success {
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+    padding: 12px 15px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+}
+.flms-error {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 6px;
+}
+.flms-empty-box {
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    padding: 30px;
+    text-align: center;
+    color: #666;
+    border-radius: 8px;
+}
+.flms-status-badge {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+.flms-status-badge.status-pending { background: #fff3cd; color: #856404; }
+.flms-status-badge.status-accepted { background: #d4edda; color: #155724; }
+.flms-status-badge.status-rejected { background: #f8d7da; color: #721c24; }
+.flms-status-badge.status-open { background: #cce5ff; color: #004085; }
+.flms-status-badge.status-pending_admin { background: #e2d5f1; color: #5a3d7a; }
+.flms-status-badge.status-approved { background: #d4edda; color: #155724; }
+.flms-status-badge.status-completed { background: #e2e3e5; color: #383d41; }
+.flms-friendly-slot-card {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-top: 3px solid var(--flms-gold);
+}
+.flms-slot-header {
+    margin-bottom: 10px;
+    font-size: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.flms-slot-sub {
+    color: #666;
+    font-size: 13px;
+    margin: 10px 0;
+}
+.flms-notification-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.flms-notif-item {
+    background: #fff;
+    border: 1px solid #eee;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+    border-left: 4px solid #000;
+}
+.flms-notif-item.flms-notif-accepted { border-left-color: #2ecc71; }
+.flms-notif-item.flms-notif-rejected { border-left-color: #e74c3c; }
+.flms-notif-item.flms-notif-admin_approved { border-left-color: var(--flms-gold); }
+.flms-notif-item.flms-notif-announcement { border-left-color: #3498db; }
+.btn-gold {
+    background: var(--flms-gold) !important;
+    color: var(--flms-black) !important;
+    border-color: var(--flms-gold) !important;
+    font-weight: 700 !important;
+}
+.btn-gold:hover {
+    background: var(--flms-gold-hover) !important;
+    color: var(--flms-black) !important;
+}
+.flms-friendly-form .form-group label,
+.flms-friendly-inbox .form-group label {
+    display: block;
+    font-weight: bold;
+    font-size: 11px;
+    margin-bottom: 5px;
+    text-transform: uppercase;
+    color: #555;
+}
+.flms-friendly-form .flms-form-grid,
+.flms-friendly-inbox .flms-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 15px;
+}
+.flms-friendly-form input[type="date"],
+.flms-friendly-form input[type="time"],
+.flms-friendly-form input[type="text"],
+.flms-friendly-form select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #000;
+    border-radius: 4px;
+}
+
+/* =========================================
+   FRIENDLY MATCH (Premium Layout)
+   ========================================= */
+
+.flms-friendly-create .flms-roster-section,
+.flms-friendly-inbox .flms-table-responsive,
+.flms-friendly-match-details {
+    border-radius: 12px;
+}
+
+.flms-friendly-create .flms-desc,
+.flms-friendly-inbox .flms-desc {
+    color: #777;
+    font-size: 14px;
+    margin-top: -10px;
+    margin-bottom: 18px;
+}
+
+.flms-friendly-create .flms-friendly-form,
+.flms-friendly-inbox .flms-friendly-form {
+    display: block;
+}
+
+.flms-friendly-form input[type="date"],
+.flms-friendly-form input[type="time"],
+.flms-friendly-form input[type="text"],
+.flms-friendly-form select {
+    height: 42px;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.10);
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+.flms-friendly-form input[type="date"]:focus,
+.flms-friendly-form input[type="time"]:focus,
+.flms-friendly-form input[type="text"]:focus,
+.flms-friendly-form select:focus {
+    outline: none;
+    border-color: rgba(212, 175, 55, 0.55);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
+}
+
+.flms-friendly-inbox .flms-tabs-filter-bar {
+    border-bottom-color: rgba(255,255,255,0.08);
+}
+.flms-friendly-inbox a.tab-filter-btn {
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
+.flms-open-request-action .flms-your-team-label {
+    color: #666;
+    font-size: 13px;
+}
+
+.flms-actions-cell {
+    white-space: nowrap;
+}
+.flms-actions-cell .button {
+    margin: 2px 4px;
+}
+
+/* Team Directory: View button (gold/black theme to match table header) */
+/* Team Directory: logo beside team name */
+.flms-team-directory .flms-team-name-with-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+}
+.flms-team-directory .flms-team-name-with-logo:hover {
+    color: var(--flms-black);
+}
+.flms-team-directory .flms-team-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: contain;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: #fff;
+}
+
+.flms-team-directory .flms-team-view-btn {
+    display: inline-block;
+    padding: 6px 14px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    text-decoration: none;
+    color: var(--flms-gold);
+    background: var(--flms-black);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+    border-radius: 6px;
+    transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.flms-team-directory .flms-team-view-btn:hover {
+    background: var(--flms-gold);
+    color: var(--flms-black);
+    border-color: var(--flms-gold);
+}
+
+.flms-friendly-match-details .flms-friendly-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 16px 0 10px;
+    padding: 14px 16px;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+}
+.flms-friendly-match-details .flms-friendly-detail-grid p {
+    margin: 0;
+    color: #222;
+    font-size: 14px;
+}
+.flms-friendly-match-details .flms-friendly-detail-grid strong {
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 11px;
+    margin-right: 6px;
+}
+
+.flms-friendly-match-details h3 {
+    margin: 18px 0 10px;
+    font-size: 16px;
+    color: var(--flms-black);
+}
+
+@media (max-width: 900px) {
+    .flms-friendly-match-details .flms-friendly-detail-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+@media (max-width: 540px) {
+    .flms-friendly-match-details .flms-friendly-detail-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Friendly Match: Rating + Comments (Premium) */
+.flms-friendly-match-details .flms-friendly-rating,
+.flms-friendly-match-details .flms-friendly-comments {
+    margin: 18px 0 !important;
+    padding: 16px 16px;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.06);
+}
+
+.flms-friendly-match-details .flms-friendly-rating h3,
+.flms-friendly-match-details .flms-friendly-comments h3 {
+    margin: 0 0 12px 0;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+.flms-friendly-match-details .flms-friendly-rating p,
+.flms-friendly-match-details .flms-friendly-comments p {
+    color: #666;
+    font-size: 13px;
+}
+
+.flms-friendly-match-details #flms-friendly-rating-select {
+    height: 40px;
+    border-radius: 10px;
+    border: 1px solid rgba(0,0,0,0.10);
+    padding: 8px 10px;
+    margin: 0 8px;
+}
+
+.flms-friendly-match-details .flms-friendly-comment-list {
+    margin: 0;
+    padding: 0 !important;
+    display: grid;
+    gap: 10px;
+}
+
+.flms-friendly-match-details .flms-comment-item {
+    margin: 0 !important;
+    padding: 12px 12px !important;
+    background: #fafafa !important;
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 12px !important;
+}
+
+.flms-friendly-match-details .flms-comment-item strong {
+    display: inline-block;
+    font-size: 13px;
+    color: var(--flms-black);
+    margin-right: 6px;
+}
+
+.flms-friendly-match-details .flms-comment-item p {
+    margin: 8px 0 0 0;
+    color: #333;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+/* Comment form (WordPress default markup) */
+.flms-friendly-match-details .comment-form {
+    margin-top: 14px;
+}
+.flms-friendly-match-details .comment-form label {
+    display: block;
+    font-weight: 800;
+    font-size: 11px;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+    color: #555;
+}
+.flms-friendly-match-details .comment-form input[type="text"],
+.flms-friendly-match-details .comment-form input[type="email"],
+.flms-friendly-match-details .comment-form input[type="url"],
+.flms-friendly-match-details .comment-form textarea {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.10);
+    padding: 12px 12px;
+    background: #fff;
+    box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+}
+.flms-friendly-match-details .comment-form textarea {
+    min-height: 160px;
+    resize: vertical;
+}
+.flms-friendly-match-details .comment-form input:focus,
+.flms-friendly-match-details .comment-form textarea:focus {
+    outline: none;
+    border-color: rgba(212, 175, 55, 0.55);
+    box-shadow: 0 0 0 4px rgba(212, 175, 55, 0.12);
+}
+
+.flms-friendly-match-details .comment-form .submit,
+.flms-friendly-match-details #flms-friendly-comment-submit,
+.flms-friendly-match-details #submit {
+    background: var(--flms-gold) !important;
+    color: var(--flms-black) !important;
+    border: 1px solid var(--flms-gold) !important;
+    border-radius: 12px !important;
+    padding: 10px 16px !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+}
+.flms-friendly-match-details .comment-form .submit:hover,
+.flms-friendly-match-details #flms-friendly-comment-submit:hover,
+.flms-friendly-match-details #submit:hover {
+    background: var(--flms-gold-hover) !important;
+    border-color: var(--flms-gold-hover) !important;
+}
+
+.flms-friendly-match-details .logged-in-as,
+.flms-friendly-match-details .comment-notes,
+.flms-friendly-match-details .form-allowed-tags {
+    font-size: 12px;
+    color: #777;
+}
+@media (max-width: 768px) {
+    .flms-friendly-slot-card { padding: 15px; }
+    .flms-slot-header { font-size: 14px; }
+}
+
+/* =========================================
+   PREMIUM PLAYER PROFILE (EPL-Style)
+   ========================================= */
+
+.flms-player-card.dark-mode {
+    background: linear-gradient(180deg, #0a0a0a 0%, #111 100%);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 16px;
+    padding: 0;
+    max-width: 900px;
+    margin: 0 auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.4), 0 0 1px rgba(212, 175, 55, 0.1);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    color: #eee;
+    overflow: hidden;
+}
+
+/* Header Section – Premium Hero */
+.flms-player-card.dark-mode .flms-player-header {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+    padding: 40px 36px;
+    background: linear-gradient(135deg, #0f0f0f 0%, #1a1a1a 100%);
+    border-bottom: 3px solid var(--flms-gold);
+    flex-wrap: wrap;
+}
+
+.flms-player-card.dark-mode .flms-player-photo img {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--flms-gold);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(212, 175, 55, 0.15);
+}
+
+.flms-player-card.dark-mode .flms-p-name {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    line-height: 1.15;
+    color: #fff;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+}
+
+.flms-player-card.dark-mode .flms-p-team {
+    color: var(--flms-gold);
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.flms-player-card.dark-mode .flms-p-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.flms-player-card.dark-mode .flms-p-meta .meta-tag {
+    background: rgba(255,255,255,0.05);
+    color: #bbb;
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.flms-player-card.dark-mode .flms-p-awards .award-item {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: rgba(212, 175, 55, 0.08);
+    border-left: 4px solid var(--flms-gold);
+    border-radius: 6px;
+    font-size: 13px;
+    color: #000;
+}
+
+/* Stats Grid – Premium Cards */
+.flms-player-card.dark-mode .flms-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    padding: 24px 36px;
+    margin: 0;
+    background: transparent;
+}
+
+.flms-player-card.dark-mode .flms-stats-grid.secondary {
+    padding-top: 0;
+    margin-top: -12px;
+}
+
+.flms-player-card.dark-mode .stat-box {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 28px 20px;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.flms-player-card.dark-mode .stat-box:hover {
+    transform: translateY(-2px);
+    background: rgba(255,255,255,0.14);
+}
+
+.flms-player-card.dark-mode .stat-box .count {
+    display: block;
+    font-size: 40px;
+    font-weight: 800;
+    margin-bottom: 8px;
+    line-height: 1;
+}
+
+.flms-player-card.dark-mode .stat-box .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #fff;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.flms-player-card.dark-mode .stat-box.points .label {
+    color: #fff;
+}
+
+.flms-player-card.dark-mode .stat-box.points {
+    border-top: 4px solid var(--flms-gold);
+}
+.flms-player-card.dark-mode .stat-box.points .count { color: var(--flms-gold); }
+
+.flms-player-card.dark-mode .stat-box.goal {
+    border-top: 4px solid #2ecc71;
+}
+.flms-player-card.dark-mode .stat-box.goal .count { color: #2ecc71; }
+
+.flms-player-card.dark-mode .stat-box.assist {
+    border-top: 4px solid #3498db;
+}
+.flms-player-card.dark-mode .stat-box.assist .count { color: #3498db; }
+
+.flms-player-card.dark-mode .stat-box.clean {
+    border-top: 4px solid #9b59b6;
+}
+.flms-player-card.dark-mode .stat-box.clean .count { color: #9b59b6; }
+
+.flms-player-card.dark-mode .stat-box.yellow {
+    border-top: 4px solid #f1c40f;
+}
+.flms-player-card.dark-mode .stat-box.yellow .count { color: #d4a800; }
+
+.flms-player-card.dark-mode .stat-box.red {
+    border-top: 4px solid #e74c3c;
+}
+.flms-player-card.dark-mode .stat-box.red .count { color: #e74c3c; }
+
+.flms-player-card.dark-mode .stat-box:not(.points):not(.goal):not(.assist):not(.clean):not(.yellow):not(.red) .count {
+    color: #fff;
+}
+
+.flms-player-card.dark-mode .stat-box:not(.points):not(.goal):not(.assist):not(.clean):not(.yellow):not(.red) {
+    border-top: 4px solid rgba(255,255,255,0.3);
+}
+
+/* Stats by Tournament – Premium Table */
+.flms-player-card.dark-mode .flms-section-box {
+    padding: 20px 24px 28px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    margin: 0 20px 24px;
+    border-radius: 12px;
+}
+
+.flms-player-card.dark-mode .flms-section-box h3 {
+    color: #fff;
+    font-size: 13px;
+    text-transform: uppercase;
+    border-left: 4px solid var(--flms-gold);
+    padding-left: 14px;
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+}
+
+.flms-player-card.dark-mode .dark-table-wrap {
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+}
+
+.flms-player-card.dark-mode .dark-table {
+    width: 100%;
+    min-width: 600px;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.flms-player-card.dark-mode .dark-table thead tr {
+    background: var(--flms-black);
+    border-bottom: 3px solid var(--flms-gold);
+}
+
+.flms-player-card.dark-mode .dark-table th {
+    padding: 14px 18px;
+    color: var(--flms-gold);
+    font-weight: 800;
+    text-transform: uppercase;
+    border: none;
+    font-size: 11px;
+    letter-spacing: 0.8px;
+}
+
+.flms-player-card.dark-mode .dark-table td {
+    padding: 14px 18px;
+    color: #000;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    text-align: center;
+    font-weight: 500;
+}
+
+.flms-player-card.dark-mode .dark-table tbody tr:hover {
+    background: rgba(255,255,255,0.03);
+}
+
+.flms-player-card.dark-mode .dark-table tr:last-child td {
+    border-bottom: none;
+}
+
+.flms-player-card.dark-mode .dark-table .t-col { text-align: left; color: #000; font-weight: 700; }
+.flms-player-card.dark-mode .dark-table .team-col { text-align: left; color: #000; white-space: nowrap; }
+
+.flms-player-card.dark-mode .val-goal { color: #2ecc71; font-weight: 700; }
+.flms-player-card.dark-mode .val-ast { color: #3498db; }
+.flms-player-card.dark-mode .val-yel { color: #f1c40f; }
+.flms-player-card.dark-mode .val-red { color: #e74c3c; }
+
+/* Match History – Premium List */
+.flms-player-card.dark-mode .flms-match-history {
+    padding: 0 36px 36px;
+}
+
+.flms-player-card.dark-mode .flms-match-history h3 {
+    color: var(--flms-gold);
+    font-size: 13px;
+    text-transform: uppercase;
+    border-left: 4px solid var(--flms-gold);
+    padding-left: 14px;
+    margin-bottom: 16px;
+    letter-spacing: 1px;
+}
+
+.flms-player-card.dark-mode .flms-mini-history {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.flms-player-card.dark-mode .flms-mini-history li {
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+    color: #bbb;
+    background: rgba(255,255,255,0.02);
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.flms-player-card.dark-mode .flms-mini-history li:last-child {
+    margin-bottom: 0;
+}
+
+.flms-player-card.dark-mode .flms-mini-history strong {
+    color: #fff;
+}
+
+.flms-player-card.dark-mode .flms-mh-row {
+    display: flex;
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+}
+.flms-player-card.dark-mode .flms-mh-date {
+    color: #888;
+    font-size: 12px;
+    margin-right: 16px;
+    min-width: 72px;
+}
+
+.flms-player-card.dark-mode .flms-mh-empty {
+    color: #888;
+    font-style: italic;
+    padding: 24px;
+}
+
+.flms-player-card.dark-mode .p-goal-badge {
+    background: rgba(46, 204, 113, 0.2);
+    color: #2ecc71;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.flms-player-card.dark-mode .flms-mh-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 20px;
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.1);
+    color: #b0b0b0;
+    font-size: 14px;
+}
+
+.flms-player-card.dark-mode .flms-mh-pagination-info {
+    margin-right: 8px;
+}
+
+.flms-player-card.dark-mode .flms-mh-pagination-links {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.flms-player-card.dark-mode .flms-mh-pagination-links a,
+.flms-player-card.dark-mode .flms-mh-pagination-links .flms-mh-pag-current {
+    padding: 6px 12px;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: background 0.2s, color 0.2s;
+}
+
+.flms-player-card.dark-mode .flms-mh-pagination-links a {
+    color: var(--flms-gold);
+    border: 1px solid rgba(212, 175, 55, 0.4);
+}
+
+.flms-player-card.dark-mode .flms-mh-pagination-links a:hover {
+    background: rgba(212, 175, 55, 0.2);
+    color: #fff;
+}
+
+.flms-player-card.dark-mode .flms-mh-pagination-links .flms-mh-pag-current {
+    background: rgba(212, 175, 55, 0.25);
+    color: #fff;
+    font-weight: 700;
+}
+
+/* Mobile */
+@media only screen and (max-width: 768px) {
+    .flms-player-card.dark-mode .flms-player-header,
+    .flms-player-card.dark-mode .flms-match-history {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+    .flms-player-card.dark-mode .flms-section-box {
+        margin-left: 12px;
+        margin-right: 12px;
+        padding: 16px 16px 24px;
+    }
+    .flms-player-card.dark-mode .flms-player-header { flex-direction: column; text-align: center; }
+    .flms-player-card.dark-mode .flms-p-team,
+    .flms-player-card.dark-mode .flms-p-meta { justify-content: center; }
+    .flms-player-card.dark-mode .flms-stats-grid {
+        grid-template-columns: 1fr 1fr !important;
+        padding: 20px;
+    }
+    .flms-player-card.dark-mode .flms-stats-grid.secondary .stat-box:last-child {
+        grid-column: 1 / -1 !important;
+    }
+    .flms-player-card.dark-mode .stat-box { padding: 20px 12px; }
+    .flms-player-card.dark-mode .stat-box .count { font-size: 30px; }
+}
+
+/* =========================================
+   CHECKOUT ROSTER (compact, dark panel)
+   ========================================= */
+.woocommerce-checkout .flms-checkout-roster-section {
+    margin-top: 20px;
+    padding: 18px 16px 20px;
+    background: linear-gradient(145deg, rgba(26, 28, 42, 0.95) 0%, rgba(18, 21, 38, 0.98) 100%);
+    border: 1px solid rgba(212, 175, 55, 0.22);
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+.woocommerce-checkout #flms-roster-section .flms-checkout-roster-title,
+.woocommerce-checkout .flms-checkout-roster-title {
+    color: #ffffff !important;
+    margin: 0 0 8px;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+.woocommerce-checkout .flms-checkout-roster-req {
+    color: #f4a261;
+    font-weight: 700;
+    font-size: 13px;
+    margin: 0 0 14px;
+}
+.woocommerce-checkout .flms-checkout-existing-players {
+    max-height: 220px;
+    overflow-y: auto;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 12px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    font-size: 13px;
+    color: #ddd;
+}
+.woocommerce-checkout .flms-checkout-existing-players label {
+    color: #ddd !important;
+}
+.woocommerce-checkout .flms-register-new-label {
+    display: block;
+    color: #ffffff !important;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+.woocommerce-checkout .flms-roster-rows-inner {
+    margin-top: 8px;
+}
+.woocommerce-checkout .flms-add-player-row-btn {
+    margin-top: 12px;
+    width: 100%;
+    background: #2a1f3d !important;
+    color: #fff !important;
+    border: 1px solid rgba(212, 175, 55, 0.35) !important;
+    padding: 10px !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+}
+.woocommerce-checkout .flms-player-row {
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(212, 175, 55, 0.2);
+    padding: 10px 12px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+}
+.woocommerce-checkout .fp-row-top,
+.woocommerce-checkout .fp-row-bot {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+.woocommerce-checkout .fp-row-bot {
+    margin-bottom: 0;
+}
+.woocommerce-checkout .np-name {
+    flex: 1.4;
+    min-width: 0;
+    font-size: 13px !important;
+    padding: 8px 10px !important;
+}
+.woocommerce-checkout .np-nick {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px !important;
+    padding: 8px 10px !important;
+}
+/* IC shorter so Age / Pos / remove stay visible on one row */
+.woocommerce-checkout .np-ic {
+    flex: 1 1 42%;
+    max-width: 46%;
+    min-width: 0;
+    font-size: 12px !important;
+    padding: 8px 8px !important;
+    border-left: 3px solid #D4AF37 !important;
+}
+.woocommerce-checkout .fp-mini-group {
+    flex: 1 1 52%;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    min-width: 0;
+    justify-content: flex-end;
+}
+.woocommerce-checkout .np-age {
+    width: 72px !important;
+    min-width: 72px !important;
+    max-width: 80px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    padding: 8px 6px !important;
+    font-size: 12px !important;
+}
+.woocommerce-checkout .np-pos {
+    flex: 1 1 auto;
+    min-width: 72px;
+    max-width: 120px;
+    font-size: 12px !important;
+    padding: 6px 8px !important;
+}
+.woocommerce-checkout .remove-p {
+    flex-shrink: 0;
+    background: rgba(192, 57, 43, 0.25);
+    color: #ff8a80;
+    border: 1px solid rgba(255, 100, 100, 0.5);
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 12px;
+}
+@media (max-width: 600px) {
+    .woocommerce-checkout .fp-row-top,
+    .woocommerce-checkout .fp-row-bot {
+        flex-direction: column;
+    }
+    .woocommerce-checkout .np-ic {
+        max-width: 100%;
+        width: 100%;
+        flex: 1 1 auto;
+    }
+    .woocommerce-checkout .fp-mini-group {
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+    .woocommerce-checkout .np-age {
+        width: 80px !important;
+        min-width: 80px !important;
+    }
+}
+.flms-bypass-input {
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+    border-radius: 8px !important;
+}
+
+/* =========================================
+   PAGINATION STYLING (Center & Horizontal)
+   ========================================= */
+
+.flms-pagination {
+    margin: 40px 0;
+    text-align: center;
+    width: 100%;
+    clear: both;
+    display: flex;
+    justify-content: center;
+}
+
+/* Force the list to be horizontal and remove bullets */
+.flms-pagination ul {
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px; /* Space between buttons */
+}
+
+.flms-pagination li {
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important; /* Double check to remove bullets */
+}
+
+/* Style the buttons (Links & Current Page) */
+.flms-pagination a, 
+.flms-pagination span.current {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px; /* Square-ish shape */
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #555;
+    font-weight: 700;
+    font-size: 14px;
+    background: #fff;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Active State (Current Page) */
+.flms-pagination span.current {
+    background: #0a0a0a; /* Black Background */
+    color: #D4AF37;      /* Gold Text */
+    border-color: #0a0a0a;
+}
+
+/* Hover State */
+.flms-pagination a:hover {
+    background: #D4AF37; /* Gold Background */
+    color: #000;         /* Black Text */
+    border-color: #D4AF37;
+    transform: translateY(-2px);
+}
+
+/* Hide the dots if they look ugly */
+.flms-pagination .dots {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+}
+
+/* =========================================
+   TEXT WRAPPING FIX (Directory & Profile)
+   ========================================= */
+
+/* 1. Allow Table Rows to Wrap (Directory & Dashboard) */
+.flms-league-table td.player-name,
+.flms-league-table td.club,
+.flms-league-table td.team-col,
+.flms-league-table td.player-team {
+    white-space: normal !important; /* Allow text to wrap to next line */
+    word-wrap: break-word;
+    line-height: 1.3;
+    max-width: 180px; /* Force wrap if longer than this */
+    min-width: 120px;
+}
+
+/* 2. Fix Alignment when text wraps */
+.flms-league-table td {
+    vertical-align: middle !important;
+}
+
+/* 3. Player Profile Header - Allow Position/Name wrap */
+.flms-p-name {
+    white-space: normal;
+    word-wrap: break-word;
+    line-height: 1.1;
+}
+
+.flms-p-meta {
+    flex-wrap: wrap; /* Allow tags to drop to next line */
+}
+
+/* Friendly: participation consent modal */
+.flms-friendly-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    box-sizing: border-box;
+}
+.flms-friendly-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    cursor: pointer;
+}
+.flms-friendly-modal-box {
+    position: relative;
+    z-index: 1;
+    max-width: 520px;
+    width: 100%;
+    max-height: 90vh;
+    overflow: auto;
+    background: #1a1a1e;
+    color: #eee;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    border-radius: 10px;
+    padding: 20px 22px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.45);
+}
+.flms-friendly-modal-wide {
+    max-width: 720px;
+}
+.flms-friendly-modal-close,
+.flms-friendly-modal-close-terms {
+    position: absolute;
+    top: 10px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: #ccc;
+    font-size: 26px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 4px 8px;
+}
+.flms-friendly-modal-box h2 {
+    margin-top: 0;
+    padding-right: 36px;
+    font-size: 1.15rem;
+    color: #fff;
+}
+.flms-friendly-terms-scroll,
+.flms-friendly-terms-scroll-visible {
+    max-height: 42vh;
+    overflow: auto;
+    margin: 12px 0;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 1.45;
+}
+.flms-friendly-terms-scroll-visible {
+    max-height: 60vh;
+}
+.flms-friendly-terms-doc h4 {
+    margin: 1em 0 0.4em;
+    color: #D4AF37;
+    font-size: 0.95rem;
+}
+.flms-friendly-modal-intro {
+    font-size: 14px;
+    color: #bbb;
+}
+.flms-friendly-modal .button-link {
+    background: none;
+    border: none;
+    color: #D4AF37;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    font: inherit;
+}
+.flms-friendly-consent-check label {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
+.flms-friendly-modal-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 12px;
+}
+.flms-notice-error {
+    background: #3a2020;
+    border: 1px solid #c0392b;
+    color: #ffccbc;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin-bottom: 12px;
+}
+.flms-status-badge.status-cancelled {
+    background: #555;
+    color: #eee;
+}
+
+/* =========================================
+   GROUP STAGE TABLE — Overrides
+   Must come last to win over global rules
+   ========================================= */
+
+/* Grid wrapper */
+.flms-group-tables-wrapper {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+    gap: 20px !important;
+    margin-bottom: 30px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Card */
+.flms-group-block {
+    background: #fff !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.07) !important;
+    border: 1px solid #e0e0e0 !important;
+    min-width: 0 !important;
+}
+
+/* Purple header bar */
+.flms-group-header {
+    background: #37003c !important;
+    color: #D4AF37 !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    padding: 10px 14px !important;
+    line-height: 1.4 !important;
+    white-space: nowrap !important;
+}
+
+/* Reset inherited min-width from .flms-league-table */
+.flms-group-table {
+    width: 100% !important;
+    min-width: 0 !important;        /* Override the 600px rule */
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+}
+
+/* Column widths via colgroup helpers */
+.flms-group-table col.col-pos  { width: 28px !important; }
+.flms-group-table col.col-club { width: auto !important; }
+.flms-group-table col.col-stat { width: 28px !important; }
+.flms-group-table col.col-pts  { width: 34px !important; }
+
+/* Header cells */
+.flms-group-table thead tr {
+    background: #f2f2f2 !important;
+}
+.flms-group-table thead tr th {
+    background: #f2f2f2 !important;
+    color: #666 !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 0 !important;
+    text-transform: uppercase !important;
+    padding: 7px 4px !important;
+    text-align: center !important;
+    border-bottom: 2px solid #ddd !important;
+    border-right: none !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    line-height: 1.2 !important;
+}
+.flms-group-table thead tr th.col-pos  { text-align: left !important; padding-left: 8px !important; }
+.flms-group-table thead tr th.col-club { text-align: left !important; padding-left: 8px !important; }
+
+/* Body cells — global reset for this table */
+.flms-group-table tbody tr td {
+    padding: 8px 4px !important;
+    font-size: 12px !important;
+    line-height: 1.3 !important;
+    border-bottom: 1px solid #f0f0f0 !important;
+    text-align: center !important;
+    vertical-align: middle !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    color: #222 !important;
+}
+
+/* Position column */
+.flms-group-table tbody tr td.col-pos {
+    text-align: left !important;
+    padding-left: 8px !important;
+    font-weight: 700 !important;
+    color: #888 !important;
+    width: 28px !important;
+}
+
+/* Club/team name column */
+.flms-group-table tbody tr td.col-club {
+    text-align: left !important;
+    padding-left: 8px !important;
+    max-width: 120px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+
+/* Points column */
+.flms-group-table tbody tr td.col-pts {
+    font-weight: 900 !important;
+    font-size: 13px !important;
+    background: transparent !important;
+    border-left: none !important;
+}
+
+/* Qualifier row highlight */
+.flms-group-qualifier td {
+    background: #f0fff4 !important;
+}
+
+/* Green dot for qualifier */
+.flms-qual-dot {
+    display: inline-block !important;
+    width: 7px !important;
+    height: 7px !important;
+    background: #27ae60 !important;
+    border-radius: 50% !important;
+    margin-left: 4px !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
+}
+
+/* Club cell flex row */
+.flms-group-table .club-cell {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    overflow: hidden !important;
+    max-width: 100% !important;
+}
+.flms-group-table .club-cell img {
+    flex-shrink: 0 !important;
+    width: 20px !important;
+    height: 20px !important;
+    object-fit: contain !important;
+    border-radius: 3px !important;
+}
+
+/* Team link inside the club cell */
+.flms-group-table .team-table-link {
+    color: #111 !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    display: block !important;
+    max-width: 110px !important;
+    line-height: 1.3 !important;
+}
+.flms-group-table .team-table-link:hover { color: #37003c !important; }
+
+/* Last row no bottom border */
+.flms-group-table tbody tr:last-child td { border-bottom: none !important; }
+
+/* Responsive: stack groups on mobile */
+@media (max-width: 700px) {
+    .flms-group-tables-wrapper {
+        grid-template-columns: 1fr !important;
+    }
+}
