@@ -249,6 +249,8 @@ class FLMS_Team_Frontend {
 
         if(empty($players)) return '<p>No players registered.</p>';
 
+        update_meta_cache( 'post', wp_list_pluck( $players, 'ID' ) );
+
         $html = '<table class="flms-squad-table">
             <thead>
                 <tr>
@@ -309,6 +311,8 @@ class FLMS_Team_Frontend {
         ]);
 
         if(empty($matches)) return '<p style="color:#666;">No matches found.</p>';
+
+        update_meta_cache( 'post', wp_list_pluck( $matches, 'ID' ) );
 
         $html = '<ul class="mini-match-list" style="padding:0; list-style:none;">';
         $processed_ids = []; 

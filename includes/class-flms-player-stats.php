@@ -6,10 +6,6 @@ class FLMS_Player_Stats {
         add_action( 'add_meta_boxes', [ $this, 'add_stats_metabox' ] );
         add_action( 'save_post_flms_match', [ $this, 'save_match_events' ] );
         
-        // Cache Clearing
-        add_action( 'save_post_flms_match', [ $this, 'clear_stats_cache' ] );
-        add_action( 'save_post_flms_player', [ $this, 'clear_stats_cache' ] );
-
         // Shortcodes
         add_shortcode( 'flms_golden_boot', [ $this, 'shortcode_goals' ] );
         add_shortcode( 'flms_top_assists', [ $this, 'shortcode_assists' ] );
@@ -215,15 +211,64 @@ class FLMS_Player_Stats {
 
         // RECALCULATE STATS
         // We calculate for everyone in the lineup and everyone in events to ensure clean sheets/apps are accurate
-        $players_to_update = array_unique(array_merge(
-            array_column($old_events, 'player_id'),
-            array_column($clean_events, 'player_id'),
-            $home_lineup,
-            $away_lineup
-        ));
+        $players_to_update = array_unique(
+            array_filter(
+                array_map(
+                    'intval',
+                    array_merge(
+                        array_column( $old_events, 'player_id' ),
+                        array_column( $clean_events, 'player_id' ),
+                        $home_lineup,
+                        $away_lineup
+                    )
+                )
+            )
+        );
 
-        foreach ( $players_to_update as $pid ) {
-            $this->recalculate_single_player( $pid );
+        $this->recalculate_players_batch( $players_to_update );
+    }
+
+    /**
+     * Recalculate many players with one match query per team (not per player).
+     *
+     * @param int[] $pids
+     */
+    private function recalculate_players_batch( $pids ) {
+        if ( empty( $pids ) ) {
+            return;
+        }
+
+        $by_team = [];
+        foreach ( $pids as $pid ) {
+            if ( ! $pid ) {
+                continue;
+            }
+            $team_id = (int) get_post_meta( $pid, 'flms_team_id', true );
+            if ( $team_id ) {
+                $by_team[ $team_id ][] = $pid;
+            } else {
+                $this->recalculate_single_player( $pid );
+            }
+        }
+
+        foreach ( $by_team as $team_id => $team_pids ) {
+            $match_ids = get_posts(
+                [
+                    'post_type'      => 'flms_match',
+                    'posts_per_page' => -1,
+                    'fields'         => 'ids',
+                    'post_status'    => 'publish',
+                    'meta_query'     => [
+                        'relation' => 'OR',
+                        [ 'key' => 'flms_home_team', 'value' => $team_id ],
+                        [ 'key' => 'flms_away_team', 'value' => $team_id ],
+                    ],
+                ]
+            );
+            update_meta_cache( 'post', $match_ids );
+            foreach ( array_unique( $team_pids ) as $pid ) {
+                $this->recalculate_single_player_for_match_ids( (int) $pid, $match_ids, (int) $team_id );
+            }
         }
     }
 
@@ -246,45 +291,66 @@ class FLMS_Player_Stats {
      * RECALCULATION FUNCTION (FIXED FOR CLEAN SHEETS)
      */
     public function recalculate_single_player( $pid ) {
-        $stats = [ 'goals'=>0, 'assists'=>0, 'yellow'=>0, 'red'=>0, 'apps'=>0, 'cleans'=>0, 'points'=>0 ];
-        
-        // Normalize Position Check
-        $raw_pos = get_post_meta($pid, 'flms_position', true);
-        $player_pos = strtoupper(trim($raw_pos)); 
-        
-        $team_id = get_post_meta($pid, 'flms_team_id', true);
+        $pid     = (int) $pid;
+        $team_id = (int) get_post_meta( $pid, 'flms_team_id', true );
 
-        if ( $team_id ) {
-            $matches = get_posts([
-                'post_type' => 'flms_match', 'posts_per_page' => -1, 'fields' => 'ids', 'post_status' => 'publish',
-                'meta_query' => [ 'relation' => 'OR', [ 'key' => 'flms_home_team', 'value' => $team_id ], [ 'key' => 'flms_away_team', 'value' => $team_id ] ]
-            ]);
-        } else { $matches = []; }
+        if ( ! $team_id ) {
+            $this->persist_player_stats( $pid, [ 'goals' => 0, 'assists' => 0, 'yellow' => 0, 'red' => 0, 'apps' => 0, 'cleans' => 0, 'points' => 0 ] );
+            return;
+        }
 
-        foreach ( $matches as $mid ) {
-            if ( get_post_meta( $mid, 'flms_match_status', true ) !== 'completed' ) continue;
+        $match_ids = get_posts(
+            [
+                'post_type'      => 'flms_match',
+                'posts_per_page' => -1,
+                'fields'         => 'ids',
+                'post_status'    => 'publish',
+                'meta_query'     => [
+                    'relation' => 'OR',
+                    [ 'key' => 'flms_home_team', 'value' => $team_id ],
+                    [ 'key' => 'flms_away_team', 'value' => $team_id ],
+                ],
+            ]
+        );
+        update_meta_cache( 'post', $match_ids );
+        $this->recalculate_single_player_for_match_ids( $pid, $match_ids, $team_id );
+    }
 
-            $hid = get_post_meta($mid, 'flms_home_team', true);
-            $h_score = get_post_meta($mid, 'flms_home_score', true);
-            $a_score = get_post_meta($mid, 'flms_away_score', true);
-            
-            $home_lineup = get_post_meta($mid, '_flms_lineup_home', true) ?: [];
-            $away_lineup = get_post_meta($mid, '_flms_lineup_away', true) ?: [];
-            
-            $is_home_player = in_array($pid, $home_lineup);
-            $is_away_player = in_array($pid, $away_lineup);
-            
+    /**
+     * @param int   $pid
+     * @param int[] $match_ids
+     * @param int   $team_id
+     */
+    private function recalculate_single_player_for_match_ids( $pid, $match_ids, $team_id ) {
+        $stats      = [ 'goals' => 0, 'assists' => 0, 'yellow' => 0, 'red' => 0, 'apps' => 0, 'cleans' => 0, 'points' => 0 ];
+        $raw_pos    = get_post_meta( $pid, 'flms_position', true );
+        $player_pos = strtoupper( trim( (string) $raw_pos ) );
+        $pid        = (int) $pid;
+        $team_id    = (int) $team_id;
+
+        foreach ( $match_ids as $mid ) {
+            if ( get_post_meta( $mid, 'flms_match_status', true ) !== 'completed' ) {
+                continue;
+            }
+
+            $hid     = get_post_meta( $mid, 'flms_home_team', true );
+            $h_score = get_post_meta( $mid, 'flms_home_score', true );
+            $a_score = get_post_meta( $mid, 'flms_away_score', true );
+
+            $home_lineup = get_post_meta( $mid, '_flms_lineup_home', true ) ?: [];
+            $away_lineup = get_post_meta( $mid, '_flms_lineup_away', true ) ?: [];
+
+            $is_home_player = in_array( $pid, array_map( 'intval', (array) $home_lineup ), true );
+            $is_away_player = in_array( $pid, array_map( 'intval', (array) $away_lineup ), true );
+
             if ( $is_home_player || $is_away_player ) {
                 $stats['apps']++;
-                
-                // --- CLEAN SHEET LOGIC (STRICT) ---
-                if ( in_array($player_pos, ['GK', 'DEF']) ) {
-                    // If Home player, they get Clean Sheet if Away Score is 0
-                    if ( $is_home_player && $a_score !== '' && (int)$a_score === 0 ) {
+
+                if ( in_array( $player_pos, [ 'GK', 'DEF' ], true ) ) {
+                    if ( $is_home_player && $a_score !== '' && (int) $a_score === 0 ) {
                         $stats['cleans']++;
                     }
-                    // If Away player, they get Clean Sheet if Home Score is 0
-                    if ( $is_away_player && $h_score !== '' && (int)$h_score === 0 ) {
+                    if ( $is_away_player && $h_score !== '' && (int) $h_score === 0 ) {
                         $stats['cleans']++;
                     }
                 }
@@ -292,19 +358,29 @@ class FLMS_Player_Stats {
 
             $events = get_post_meta( $mid, '_flms_match_events', true ) ?: [];
             foreach ( $events as $e ) {
-                if ( isset($e['player_id']) && $e['player_id'] == $pid ) {
-                    if ( $e['type'] === 'goal' ) $stats['goals']++;
-                    if ( $e['type'] === 'assist' ) $stats['assists']++;
-                    if ( $e['type'] === 'yellow' ) $stats['yellow']++;
-                    if ( $e['type'] === 'red' ) $stats['red']++;
+                if ( isset( $e['player_id'] ) && (int) $e['player_id'] === $pid ) {
+                    if ( $e['type'] === 'goal' ) {
+                        $stats['goals']++;
+                    }
+                    if ( $e['type'] === 'assist' ) {
+                        $stats['assists']++;
+                    }
+                    if ( $e['type'] === 'yellow' ) {
+                        $stats['yellow']++;
+                    }
+                    if ( $e['type'] === 'red' ) {
+                        $stats['red']++;
+                    }
                 }
             }
         }
 
-        // Formula: Goals(5), Assists(3), Clean Sheet(3), App(1), Yellow(-2), Red(-5)
-        $stats['points'] = ($stats['goals'] * 5) + ($stats['assists'] * 3) + ($stats['cleans'] * 3) + ($stats['apps'] * 1) - ($stats['yellow'] * 2) - ($stats['red'] * 5);
-        
-        foreach($stats as $key => $val) {
+        $stats['points'] = ( $stats['goals'] * 5 ) + ( $stats['assists'] * 3 ) + ( $stats['cleans'] * 3 ) + ( $stats['apps'] * 1 ) - ( $stats['yellow'] * 2 ) - ( $stats['red'] * 5 );
+        $this->persist_player_stats( $pid, $stats );
+    }
+
+    private function persist_player_stats( $pid, $stats ) {
+        foreach ( $stats as $key => $val ) {
             update_post_meta( $pid, 'flms_total_' . $key, $val );
         }
         update_post_meta( $pid, 'flms_ranking_points', $stats['points'] );
@@ -318,14 +394,9 @@ class FLMS_Player_Stats {
         $atts = shortcode_atts(['id' => 0, 'limit' => 10, 'title' => 'Top Assists'], $atts);
         return $this->render_leaderboard(['type' => 'assists', 'id' => $atts['id'], 'limit' => $atts['limit'], 'title' => $atts['title']]);
     }
-    public function clear_stats_cache() {
-        global $wpdb;
-        $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_flms_lead_%'" );
-    }
-
     private function render_leaderboard( $args ) {
         $type  = $args['type'];  $limit = intval($args['limit']); $tid   = intval($args['id']); $title = $args['title'];
-        $cache_key = 'flms_lead_' . $type . '_' . $tid . '_' . $limit;
+        $cache_key = 'flms_lead_' . FLMS_Cache_Bump::version() . '_' . $type . '_' . $tid . '_' . $limit;
         $cached = get_transient($cache_key);
         if ( false !== $cached ) return $cached . '<!-- Cached -->';
 

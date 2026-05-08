@@ -203,73 +203,129 @@ class FLMS_Match_Engine {
     // Returns [ 'A' => [ [team_id, pts, gd, gf], ... ], 'B' => [...] ]
     // ---------------------------------------------------------------
     public static function get_group_standings( $tournament_id ) {
-        // Get all teams in this tournament that have a group assigned
-        $teams = get_posts([
-            'post_type'      => 'flms_team',
-            'posts_per_page' => -1,
-            'fields'         => 'ids',
-            'meta_query'     => [
-                'relation' => 'AND',
-                [ 'key' => 'flms_tournament_id', 'value' => $tournament_id ],
-                [ 'key' => 'flms_group_' . $tournament_id, 'compare' => 'EXISTS' ],
-            ],
-            'post_status'    => 'publish',
-        ]);
+        $tournament_id = (int) $tournament_id;
 
-        $standings = [];
-        foreach ( $teams as $team_id ) {
-            $group = get_post_meta( $team_id, 'flms_group_' . $tournament_id, true );
-            if ( ! $group ) continue;
-
-            // Build stats only from matches within this tournament + group
-            $matches = get_posts([
-                'post_type'      => 'flms_match',
+        $teams = get_posts(
+            [
+                'post_type'      => 'flms_team',
                 'posts_per_page' => -1,
+                'fields'         => 'ids',
                 'meta_query'     => [
                     'relation' => 'AND',
                     [ 'key' => 'flms_tournament_id', 'value' => $tournament_id ],
-                    [ 'key' => 'flms_match_group',   'value' => $group ],
-                    [ 'key' => 'flms_match_status',  'value' => 'completed' ],
-                    [
-                        'relation' => 'OR',
-                        [ 'key' => 'flms_home_team', 'value' => $team_id ],
-                        [ 'key' => 'flms_away_team', 'value' => $team_id ],
-                    ],
+                    [ 'key' => 'flms_group_' . $tournament_id, 'compare' => 'EXISTS' ],
                 ],
-            ]);
+                'post_status'    => 'publish',
+            ]
+        );
 
-            $pts = 0; $gf = 0; $ga = 0; $p = 0; $w = 0; $d = 0; $l = 0;
-            foreach ( $matches as $match ) {
-                $mid     = $match->ID;
-                $is_home = ( get_post_meta( $mid, 'flms_home_team', true ) == $team_id );
-                $hs      = (int) get_post_meta( $mid, 'flms_home_score', true );
-                $as      = (int) get_post_meta( $mid, 'flms_away_score', true );
-                $my      = $is_home ? $hs : $as;
-                $op      = $is_home ? $as : $hs;
-                $p++; $gf += $my; $ga += $op;
-                if ( $my > $op )      { $pts += 3; $w++; }
-                elseif ( $my === $op ){ $pts += 1; $d++; }
-                else                  { $l++; }
+        $team_to_group = [];
+        foreach ( $teams as $team_id ) {
+            $group = get_post_meta( $team_id, 'flms_group_' . $tournament_id, true );
+            if ( $group ) {
+                $team_to_group[ (int) $team_id ] = $group;
+            }
+        }
+
+        if ( empty( $team_to_group ) ) {
+            return [];
+        }
+
+        update_meta_cache( 'post', array_keys( $team_to_group ) );
+
+        $all_matches = get_posts(
+            [
+                'post_type'      => 'flms_match',
+                'posts_per_page' => -1,
+                'fields'         => 'ids',
+                'meta_query'     => [
+                    'relation' => 'AND',
+                    [ 'key' => 'flms_tournament_id', 'value' => $tournament_id ],
+                    [ 'key' => 'flms_match_status', 'value' => 'completed' ],
+                    [ 'key' => 'flms_match_group', 'compare' => 'EXISTS' ],
+                ],
+            ]
+        );
+
+        update_meta_cache( 'post', $all_matches );
+
+        $stats_map = [];
+        foreach ( $team_to_group as $tid => $_g ) {
+            $stats_map[ $tid ] = [ 'p' => 0, 'w' => 0, 'd' => 0, 'l' => 0, 'gf' => 0, 'ga' => 0, 'pts' => 0 ];
+        }
+
+        foreach ( $all_matches as $mid ) {
+            $grp = get_post_meta( $mid, 'flms_match_group', true );
+            if ( ! $grp ) {
+                continue;
             }
 
+            $h_id = (int) get_post_meta( $mid, 'flms_home_team', true );
+            $a_id = (int) get_post_meta( $mid, 'flms_away_team', true );
+
+            if ( ! isset( $team_to_group[ $h_id ], $team_to_group[ $a_id ] ) ) {
+                continue;
+            }
+            if ( $team_to_group[ $h_id ] !== $grp || $team_to_group[ $a_id ] !== $grp ) {
+                continue;
+            }
+
+            $hs = (int) get_post_meta( $mid, 'flms_home_score', true );
+            $as = (int) get_post_meta( $mid, 'flms_away_score', true );
+
+            foreach ( [ [ $h_id, $hs, $as ], [ $a_id, $as, $hs ] ] as $side ) {
+                list( $tid, $my, $op ) = $side;
+                if ( ! isset( $stats_map[ $tid ] ) ) {
+                    continue;
+                }
+                $stats_map[ $tid ]['p']++;
+                $stats_map[ $tid ]['gf'] += $my;
+                $stats_map[ $tid ]['ga'] += $op;
+                if ( $my > $op ) {
+                    $stats_map[ $tid ]['w']++;
+                    $stats_map[ $tid ]['pts'] += 3;
+                } elseif ( $my === $op ) {
+                    $stats_map[ $tid ]['d']++;
+                    $stats_map[ $tid ]['pts'] += 1;
+                } else {
+                    $stats_map[ $tid ]['l']++;
+                }
+            }
+        }
+
+        $standings = [];
+        foreach ( $team_to_group as $team_id => $group ) {
+            $s = $stats_map[ $team_id ];
             $standings[ $group ][] = [
                 'team_id' => $team_id,
                 'name'    => get_the_title( $team_id ),
-                'p'       => $p, 'w' => $w, 'd' => $d, 'l' => $l,
-                'gf'      => $gf, 'ga' => $ga, 'gd' => $gf - $ga,
-                'pts'     => $pts,
+                'p'       => $s['p'],
+                'w'       => $s['w'],
+                'd'       => $s['d'],
+                'l'       => $s['l'],
+                'gf'      => $s['gf'],
+                'ga'      => $s['ga'],
+                'gd'      => $s['gf'] - $s['ga'],
+                'pts'     => $s['pts'],
             ];
         }
 
-        // Sort each group: Points DESC > GD DESC > GF DESC
         foreach ( $standings as $group => &$rows ) {
-            usort( $rows, function( $a, $b ) {
-                if ( $a['pts'] !== $b['pts'] ) return $b['pts'] - $a['pts'];
-                if ( $a['gd']  !== $b['gd']  ) return $b['gd']  - $a['gd'];
-                return $b['gf'] - $a['gf'];
-            });
+            usort(
+                $rows,
+                function ( $a, $b ) {
+                    if ( $a['pts'] !== $b['pts'] ) {
+                        return $b['pts'] - $a['pts'];
+                    }
+                    if ( $a['gd'] !== $b['gd'] ) {
+                        return $b['gd'] - $a['gd'];
+                    }
+                    return $b['gf'] - $a['gf'];
+                }
+            );
         }
-        ksort( $standings ); // Ensure Group A, B, C order
+        ksort( $standings );
+
         return $standings;
     }
 

@@ -18,71 +18,79 @@ class FLMS_Standings {
         $away_team_id = get_post_meta( $post_id, 'flms_away_team', true );
         $tournament_id = get_post_meta( $post_id, 'flms_tournament_id', true );
 
-        // Recalculate Stats for BOTH teams involved
-        if ( $home_team_id ) $this->calculate_team_stats( $home_team_id, $tournament_id );
-        if ( $away_team_id ) $this->calculate_team_stats( $away_team_id, $tournament_id );
+        $team_ids = array_unique( array_filter( array_map( 'intval', [ $home_team_id, $away_team_id ] ) ) );
+        if ( empty( $team_ids ) || ! $tournament_id ) {
+            return;
+        }
+
+        $match_ids = get_posts( [
+            'post_type'      => 'flms_match',
+            'posts_per_page' => -1,
+            'fields'         => 'ids',
+            'meta_key'       => 'flms_match_date',
+            'orderby'        => 'meta_value',
+            'order'          => 'ASC',
+            'meta_query'     => [
+                'relation' => 'AND',
+                [ 'key' => 'flms_tournament_id', 'value' => $tournament_id ],
+                [ 'key' => 'flms_match_status', 'value' => 'completed' ],
+                [
+                    'relation' => 'OR',
+                    [ 'key' => 'flms_home_team', 'value' => $team_ids, 'compare' => 'IN' ],
+                    [ 'key' => 'flms_away_team', 'value' => $team_ids, 'compare' => 'IN' ],
+                ],
+            ],
+        ] );
+
+        update_meta_cache( 'post', $match_ids );
+
+        foreach ( $team_ids as $tid ) {
+            $this->calculate_team_stats_from_matches( $tid, $match_ids );
+        }
     }
 
-    private function calculate_team_stats( $team_id, $tournament_id ) {
-        // Initialize Stats to 0
+    /**
+     * @param int   $team_id
+     * @param int[] $match_ids Completed tournament matches (may include other teams).
+     */
+    private function calculate_team_stats_from_matches( $team_id, $match_ids ) {
         $stats = [
             'played' => 0,
             'won'    => 0,
             'drawn'  => 0,
             'lost'   => 0,
-            'gf'     => 0, // Goals For
-            'ga'     => 0, // Goals Against
-            'gd'     => 0, // Goal Difference
-            'points' => 0
+            'gf'     => 0,
+            'ga'     => 0,
+            'gd'     => 0,
+            'points' => 0,
         ];
 
-        $form_guide = []; // W-D-L History
+        $form_guide = [];
+        $team_id    = (int) $team_id;
 
-        // Query ONLY matches that are currently marked 'completed'
-        $args = [
-            'post_type'  => 'flms_match',
-            'posts_per_page' => -1,
-            'meta_key'   => 'flms_match_date',
-            'orderby'    => 'meta_value',
-            'order'      => 'ASC',
-            'meta_query' => [
-                'relation' => 'AND',
-                [ 'key' => 'flms_tournament_id', 'value' => $tournament_id ],
-                [ 'key' => 'flms_match_status', 'value' => 'completed' ], // STRICTLY COMPLETED
-                [ 
-                    'relation' => 'OR',
-                    [ 'key' => 'flms_home_team', 'value' => $team_id ],
-                    [ 'key' => 'flms_away_team', 'value' => $team_id ]
-                ]
-            ]
-        ];
+        foreach ( $match_ids as $mid ) {
+            $h_id = (int) get_post_meta( $mid, 'flms_home_team', true );
+            $a_id = (int) get_post_meta( $mid, 'flms_away_team', true );
+            if ( $h_id !== $team_id && $a_id !== $team_id ) {
+                continue;
+            }
 
-        $matches = get_posts( $args );
-
-        foreach ( $matches as $match ) {
-            $mid = $match->ID;
-            $h_id = get_post_meta( $mid, 'flms_home_team', true );
-            
             $h_score = (int) get_post_meta( $mid, 'flms_home_score', true );
             $a_score = (int) get_post_meta( $mid, 'flms_away_score', true );
 
-            // Determine if we are Home or Away
-            $is_home = ( $h_id == $team_id );
+            $is_home   = ( $h_id === $team_id );
+            $my_score  = $is_home ? $h_score : $a_score;
+            $op_score  = $is_home ? $a_score : $h_score;
 
-            $my_score = $is_home ? $h_score : $a_score;
-            $op_score = $is_home ? $a_score : $h_score;
-
-            // Update Basic Stats
             $stats['played']++;
             $stats['gf'] += $my_score;
             $stats['ga'] += $op_score;
 
-            // Determine W/D/L
             if ( $my_score > $op_score ) {
                 $stats['won']++;
                 $stats['points'] += 3;
                 $form_guide[] = 'W';
-            } elseif ( $my_score == $op_score ) {
+            } elseif ( $my_score === $op_score ) {
                 $stats['drawn']++;
                 $stats['points'] += 1;
                 $form_guide[] = 'D';
@@ -92,13 +100,9 @@ class FLMS_Standings {
             }
         }
 
-        // Calculate Goal Difference
-        $stats['gd'] = $stats['gf'] - $stats['ga'];
+        $stats['gd']       = $stats['gf'] - $stats['ga'];
+        $last_5_form       = array_slice( $form_guide, -5 );
 
-        // Get last 5 form results
-        $last_5_form = array_slice( $form_guide, -5 );
-
-        // SAVE to Team Post Meta
         update_post_meta( $team_id, 'flms_stats_played', $stats['played'] );
         update_post_meta( $team_id, 'flms_stats_won', $stats['won'] );
         update_post_meta( $team_id, 'flms_stats_drawn', $stats['drawn'] );

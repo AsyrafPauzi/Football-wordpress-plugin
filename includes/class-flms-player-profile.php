@@ -8,9 +8,6 @@ class FLMS_Player_Profile {
         add_action( 'add_meta_boxes', [ $this, 'add_remarks_metabox' ] );
         add_action( 'save_post_flms_player', [ $this, 'save_remarks_meta' ] );
 
-        // PERFORMANCE: Clear cache when data changes
-        add_action( 'save_post_flms_match', [ $this, 'clear_profile_cache' ] );
-        add_action( 'save_post_flms_player', [ $this, 'clear_profile_cache' ] );
     }
 
     // --- 1. ADMIN METABOX ---
@@ -31,13 +28,7 @@ class FLMS_Player_Profile {
         }
     }
 
-    // --- 2. CACHE ---
-    public function clear_profile_cache() {
-        global $wpdb;
-        $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_flms_profile_%'" );
-    }
-
-    // --- 3. RENDER PROFILE ---
+    // --- 2. RENDER PROFILE ---
     public function render_player_profile( $content ) {
         if ( ! is_singular( 'flms_player' ) ) return $content;
 
@@ -45,7 +36,7 @@ class FLMS_Player_Profile {
         $mh_page = isset( $_GET['mhp'] ) ? max( 1, (int) $_GET['mhp'] ) : 1;
 
         // CHECK CACHE (include match history page so pagination is correct)
-        $cache_key = 'flms_profile_' . $current_pid . '_mhp' . $mh_page;
+        $cache_key = 'flms_profile_' . FLMS_Cache_Bump::version() . '_' . $current_pid . '_mhp' . $mh_page;
         $cached_html = get_transient( $cache_key );
         if ( false !== $cached_html ) { return $cached_html . '<!-- Cached Profile -->'; }
 
@@ -68,6 +59,8 @@ class FLMS_Player_Profile {
         $grand_total = [ 'goals'=>0, 'assists'=>0, 'apps'=>0, 'cleans'=>0, 'yellow'=>0, 'red'=>0, 'points'=>0 ];
         $breakdown_rows = [];
         $teams_list = [];
+        $header_team_names = [];
+        $tournament_rows = [];
         $positions_list = []; // NEW: Array to hold positions
         $all_remarks = []; 
 
@@ -102,21 +95,55 @@ class FLMS_Player_Profile {
             $grand_total['cleans'] += $cs; $grand_total['yellow'] += $y; $grand_total['red'] += $r;
             $grand_total['points'] += $pts;
 
-            $team_name = get_the_title( $tid );
+            $team_name = $tid ? get_the_title( $tid ) : '';
             $tour_name = $tour_id ? get_the_title($tour_id) : 'Unassigned';
 
-            // Only add to Teams List if in Tournament
-            if ( ! empty($tour_id) ) {
-                $teams_list[] = $team_name;
+            if ( $tid && $team_name !== '' ) {
+                $header_team_names[] = $team_name;
             }
 
             // Breakdown
             if ( ! empty($tour_id) || $ap > 0 ) {
-                $breakdown_rows[] = [ 'tournament' => $tour_name, 'team' => $team_name, 'apps' => $ap, 'goals' => $g, 'assists' => $a, 'yellow' => $y, 'red' => $r ];
+                $row = [ 'tournament' => $tour_name, 'team' => $team_name, 'apps' => $ap, 'goals' => $g, 'assists' => $a, 'yellow' => $y, 'red' => $r ];
+
+                if ( ! empty($tour_id) ) {
+                    // Avoid showing multiple teams inside the same tournament for one IC.
+                    // Keep the most recently updated player record for that tournament.
+                    $modified = strtotime( (string) get_post_field( 'post_modified_gmt', $pid ) );
+                    if ( ! $modified ) {
+                        $modified = strtotime( (string) get_post_field( 'post_modified', $pid ) );
+                    }
+                    if ( ! $modified ) {
+                        $modified = (int) $pid; // Fallback heuristic: newer post ID is usually newer record.
+                    }
+
+                    if ( ! isset($tournament_rows[$tour_id]) ) {
+                        $tournament_rows[$tour_id] = [ 'modified' => $modified, 'apps' => $ap, 'row' => $row ];
+                    } else {
+                        $existing = $tournament_rows[$tour_id];
+                        $should_replace = $modified > $existing['modified']
+                            || ( $modified === $existing['modified'] && $ap > $existing['apps'] );
+                        if ( $should_replace ) {
+                            $tournament_rows[$tour_id] = [ 'modified' => $modified, 'apps' => $ap, 'row' => $row ];
+                        }
+                    }
+                } else {
+                    $breakdown_rows[] = $row;
+                }
             }
         }
-        
-        $teams_display = !empty($teams_list) ? implode(' / ', array_unique($teams_list)) : 'Free Agent';
+
+        if ( ! empty($tournament_rows) ) {
+            foreach ( $tournament_rows as $entry ) {
+                $breakdown_rows[] = $entry['row'];
+                if ( ! empty($entry['row']['team']) ) {
+                    $teams_list[] = $entry['row']['team'];
+                }
+            }
+        }
+
+        $merged_teams = array_unique( array_merge( $header_team_names, $teams_list ) );
+        $teams_display = ! empty( $merged_teams ) ? implode( ' / ', $merged_teams ) : 'Free Agent';
         
         // MERGE POSITIONS: e.g., "GK / FWD"
         $positions_display = !empty($positions_list) ? implode(' / ', array_unique($positions_list)) : 'Player';
@@ -236,6 +263,9 @@ class FLMS_Player_Profile {
         ]);
 
         if ( empty($matches) ) return '<p class="flms-mh-empty">No matches played.</p>';
+
+        $match_ids = wp_list_pluck( $matches, 'ID' );
+        update_meta_cache( 'post', $match_ids );
 
         $all_pids_int = array_map( 'intval', $all_pids );
         $rows = [];

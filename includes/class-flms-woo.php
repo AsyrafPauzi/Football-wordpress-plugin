@@ -119,13 +119,23 @@ class FLMS_Woo {
             $tid = $item->get_meta( '_match_fee_team' );
 
             if ( $mid && $tid ) {
-                $home_team_id = get_post_meta($mid, 'flms_home_team', true);
-                if ( $tid == $home_team_id ) {
+                $mid = (int) $mid;
+                $tid = (int) $tid;
+                $buyer_id = (int) $order->get_user_id();
+                $home_team_id = (int) get_post_meta( $mid, 'flms_home_team', true );
+                $away_team_id = (int) get_post_meta( $mid, 'flms_away_team', true );
+                $team_post = get_post( $tid );
+                $owns_team = $team_post && $team_post->post_type === 'flms_team' && (int) $team_post->post_author === $buyer_id;
+                $is_participant = ( $tid === $home_team_id || $tid === $away_team_id );
+                if ( ! $owns_team || ! $is_participant ) {
+                    $order->add_order_note( 'Match fee skipped: team ownership or match participation could not be verified.' );
+                } elseif ( $tid === $home_team_id ) {
                     update_post_meta( $mid, '_flms_paid_home', 'yes' );
+                    update_post_meta( $mid, "_fee_receipt_$tid", $order_id );
                 } else {
                     update_post_meta( $mid, '_flms_paid_away', 'yes' );
+                    update_post_meta( $mid, "_fee_receipt_$tid", $order_id );
                 }
-                update_post_meta( $mid, "_fee_receipt_$tid", $order_id );
             }
 
             // A2. Friendly match fee (RM500 per team)
@@ -168,21 +178,42 @@ class FLMS_Woo {
         $new_json = $order->get_meta( '_flms_new_json' );
         
         // If NO player data, do not create a team (This prevents empty teams from processing)
-        if ( ! $selected_ids_json && ! $new_json ) return; 
+        if ( ! $selected_ids_json && ! $new_json ) return;
 
-        // Get Tournament ID
-        $items = $order->get_items();
-        $tournament_id = 0;
-        foreach ( $items as $item ) { $tournament_id = $item->get_product_id(); break; }
+        $tournament_line = $this->get_tournament_line_from_order( $order );
+        if ( ! $tournament_line ) {
+            $order->add_order_note( __( 'Tournament registration skipped: no tournament product line found on this order.', 'flms' ) );
+            return;
+        }
+
+        $tournament_id = (int) $tournament_line['product_id'];
+        $tournament_item = $tournament_line['item'];
 
         // Create New Team
         $club_name = get_user_meta( $user_id, 'flms_club_name', true ) ?: $order->get_billing_last_name() . ' FC';
-        $final_team_name = "$club_name (" . $item->get_name() . ")";
+        $suffix = method_exists( $tournament_item, 'get_name' ) ? $tournament_item->get_name() : get_the_title( $tournament_id );
+        $final_team_name = $club_name . ' (' . $suffix . ')';
 
-        $new_team_id = wp_insert_post([ 'post_type'=>'flms_team', 'post_title'=>$final_team_name, 'post_status'=>'publish', 'post_author'=>$user_id ]);
+        $new_team_id = wp_insert_post(
+            [
+                'post_type'   => 'flms_team',
+                'post_title'  => $final_team_name,
+                'post_status' => 'publish',
+                'post_author' => $user_id,
+            ],
+            true
+        );
+
+        if ( is_wp_error( $new_team_id ) || ! $new_team_id ) {
+            $msg = is_wp_error( $new_team_id ) ? $new_team_id->get_error_message() : 'unknown';
+            $order->add_order_note( sprintf( __( 'Failed to create league team: %s', 'flms' ), $msg ) );
+            return;
+        }
+
+        $new_team_id = (int) $new_team_id;
         update_post_meta( $new_team_id, 'flms_tournament_id', $tournament_id );
 
-        // Mark Processed
+        // Mark processed only after team exists.
         $order->update_meta_data( '_flms_team_created_flag', 'yes' );
         $order->save();
 
@@ -202,15 +233,45 @@ class FLMS_Woo {
                 foreach($old_ids as $old_pid) {
                     $p_name = get_the_title($old_pid);
                     $p_ic   = get_post_meta($old_pid, 'flms_ic', true);
+                    $p_ic_clean = $this->normalize_ic( $p_ic );
                     $p_age  = get_post_meta($old_pid, 'flms_age', true);
                     $p_pos  = get_post_meta($old_pid, 'flms_position', true);
                     $p_num  = get_post_meta($old_pid, 'flms_number', true);
-                    
-                    $new_pid = wp_insert_post([
-                        'post_type'   => 'flms_player', 'post_title'  => $p_name, 'post_status' => 'publish', 'post_author' => $user_id
-                    ]);
 
-                    update_post_meta($new_pid, 'flms_ic', $p_ic);
+                    // Defensive guard: never allow duplicate IC in same tournament, even if validation was bypassed.
+                    if ( ! empty( $p_ic_clean ) ) {
+                        $collision_team_id = $this->find_ic_team_in_tournament( $p_ic_clean, $tournament_id );
+                        if ( $collision_team_id ) {
+                            $order->add_order_note(
+                                sprintf(
+                                    'Skipped player "%s" (%s): IC already registered in this tournament under team "%s".',
+                                    $p_name,
+                                    $p_ic_clean,
+                                    get_the_title( $collision_team_id )
+                                )
+                            );
+                            continue;
+                        }
+                    }
+                    
+                    $new_pid = wp_insert_post(
+                        [
+                            'post_type'   => 'flms_player',
+                            'post_title'  => $p_name,
+                            'post_status' => 'publish',
+                            'post_author' => $user_id,
+                        ],
+                        true
+                    );
+
+                    if ( is_wp_error( $new_pid ) || ! $new_pid ) {
+                        $em = is_wp_error( $new_pid ) ? $new_pid->get_error_message() : 'unknown';
+                        $order->add_order_note( sprintf( __( 'Skipped cloning player "%s": %s', 'flms' ), $p_name, $em ) );
+                        continue;
+                    }
+                    $new_pid = (int) $new_pid;
+
+                    update_post_meta($new_pid, 'flms_ic', $p_ic_clean);
                     update_post_meta($new_pid, 'flms_age', $p_age);
                     update_post_meta($new_pid, 'flms_position', $p_pos);
                     update_post_meta($new_pid, 'flms_number', $p_num);
@@ -231,34 +292,41 @@ class FLMS_Woo {
                 foreach($new_data as $p) {
                     if(empty($p['name'])) continue;
                     
-                    $raw_ic = sanitize_text_field($p['ic'] ?? '');
-                    $ic = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $raw_ic)); 
-                    
-                    $pid = 0;
+                    $ic = $this->normalize_ic( $p['ic'] ?? '' );
 
-                    // Search for Duplicate IC in THIS tournament
-                    if(!empty($ic)) {
-                        $potential_players = get_posts(['post_type' => 'flms_player', 'meta_key' => 'flms_ic', 'meta_value' => $ic, 'posts_per_page' => -1, 'fields' => 'ids']);
-                        foreach($potential_players as $found_pid) {
-                            $their_team = get_post_meta($found_pid, 'flms_team_id', true);
-                            if($their_team) {
-                                $their_tour = get_post_meta($their_team, 'flms_tournament_id', true);
-                                if($their_tour == $tournament_id) {
-                                    $pid = $found_pid; // Reuse if duplicate in same tournament
-                                    break; 
-                                }
-                            }
+                    if ( ! empty( $ic ) ) {
+                        $collision_team_id = $this->find_ic_team_in_tournament( $ic, $tournament_id );
+                        if ( $collision_team_id ) {
+                            $order->add_order_note(
+                                sprintf(
+                                    'Skipped player "%s" (%s): IC already registered in this tournament under team "%s".',
+                                    sanitize_text_field( $p['name'] ),
+                                    $ic,
+                                    get_the_title( $collision_team_id )
+                                )
+                            );
+                            continue;
                         }
                     }
 
-                    if($pid === 0) {
-                        $pid = wp_insert_post([
-                            'post_type' => 'flms_player', 'post_title' => sanitize_text_field($p['name']), 'post_status' => 'publish', 'post_author' => $user_id
-                        ]);
-                        update_post_meta($pid, 'flms_total_goals', 0);
-                        update_post_meta($pid, 'flms_ranking_points', 0);
+                    $pid = wp_insert_post(
+                        [
+                            'post_type'   => 'flms_player',
+                            'post_title'  => sanitize_text_field( $p['name'] ),
+                            'post_status' => 'publish',
+                            'post_author' => $user_id,
+                        ],
+                        true
+                    );
+                    if ( is_wp_error( $pid ) || ! $pid ) {
+                        $em = is_wp_error( $pid ) ? $pid->get_error_message() : 'unknown';
+                        $order->add_order_note( sprintf( __( 'Skipped new player "%s": %s', 'flms' ), sanitize_text_field( $p['name'] ), $em ) );
+                        continue;
                     }
-                    
+                    $pid = (int) $pid;
+                    update_post_meta($pid, 'flms_total_goals', 0);
+                    update_post_meta($pid, 'flms_ranking_points', 0);
+
                     update_post_meta($pid, 'flms_ic', $ic);
                     update_post_meta($pid, 'flms_age', sanitize_text_field($p['age']));
                     update_post_meta($pid, 'flms_nickname', sanitize_text_field($p['nickname']));
@@ -296,8 +364,27 @@ class FLMS_Woo {
         // If buying a tournament, enforce the rules
         $min = 20; 
         $max = 35;
-        $count_existing = isset($_POST['flms_selected_players']) ? count($_POST['flms_selected_players']) : 0;
+        $selected_players = isset($_POST['flms_selected_players']) && is_array($_POST['flms_selected_players']) ? array_map( 'intval', $_POST['flms_selected_players'] ) : [];
+        $count_existing = count( $selected_players );
         $count_new = 0;
+        $submitted_ics = [];
+
+        // Validate selected existing players (from previous seasons) against tournament IC collisions.
+        foreach ( $selected_players as $selected_pid ) {
+            $selected_ic = $this->normalize_ic( get_post_meta( $selected_pid, 'flms_ic', true ) );
+            $selected_name = get_the_title( $selected_pid );
+            if ( empty( $selected_ic ) ) {
+                $errors->add( 'validation', "Player '{$selected_name}' is missing IC/Passport number. Please fill in IC first before checkout." );
+                continue;
+            }
+
+            if ( isset( $submitted_ics[ $selected_ic ] ) ) {
+                $errors->add( 'validation', "Duplicate IC detected in your roster: '{$selected_ic}'. One IC can only appear once in one registration submission." );
+                continue;
+            }
+            $submitted_ics[ $selected_ic ] = true;
+            $this->check_ic_collision( $selected_ic, $tournament_id, $selected_name, $errors );
+        }
 
         // Count New Players
         if ( ! empty($_POST['flms_new_players_json']) ) {
@@ -308,13 +395,18 @@ class FLMS_Woo {
                 foreach ( $new_players as $index => $p ) {
                     if ( ! empty($p['name']) ) {
                         // Check Compulsory IC
-                        $raw_ic = sanitize_text_field($p['ic'] ?? '');
-                        $ic = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $raw_ic)); 
+                        $ic = $this->normalize_ic( $p['ic'] ?? '' );
 
                         if ( empty($ic) ) {
-                            $errors->add( 'validation', "Error: Player '{$p['name']}' is missing an IC/Passport." );
+                            $errors->add( 'validation', "Player '{$p['name']}' is missing IC/Passport number. Please fill in IC first before checkout." );
                         } 
                         else {
+                            if ( isset( $submitted_ics[ $ic ] ) ) {
+                                $errors->add( 'validation', "Duplicate IC detected in your roster: '{$ic}'. One IC can only appear once in one registration submission." );
+                                $count_new++;
+                                continue;
+                            }
+                            $submitted_ics[ $ic ] = true;
                             $this->check_ic_collision($ic, $tournament_id, $p['name'], $errors);
                         }
                         $count_new++;
@@ -329,6 +421,44 @@ class FLMS_Woo {
     }
 
     private function check_ic_collision($ic, $tournament_id, $player_name, $errors) {
+        $collision_team_id = $this->find_ic_team_in_tournament( $ic, $tournament_id );
+        if ( $collision_team_id ) {
+            $other_team_name = get_the_title( $collision_team_id );
+            $errors->add(
+                'validation',
+                "<strong>Registration blocked:</strong> Player '{$player_name}' (IC: {$ic}) is already registered under team '<strong>{$other_team_name}</strong>' in this tournament.<br>Please check IC again or remove this player from the roster. One IC is allowed for one team only in the same league."
+            );
+        }
+    }
+
+    private function normalize_ic( $raw_ic ) {
+        return strtoupper( preg_replace( '/[^a-zA-Z0-9]/', '', sanitize_text_field( (string) $raw_ic ) ) );
+    }
+
+    /**
+     * First line item whose product is a tournament (has _flms_start_date).
+     *
+     * @param \WC_Order $order Order object.
+     * @return array{product_id:int,item:\WC_Order_Item_Product}|null
+     */
+    private function get_tournament_line_from_order( $order ) {
+        foreach ( $order->get_items() as $item ) {
+            if ( ! is_object( $item ) || ! method_exists( $item, 'get_product_id' ) ) {
+                continue;
+            }
+            $product_id = (int) $item->get_product_id();
+            if ( $product_id && get_post_meta( $product_id, '_flms_start_date', true ) ) {
+                return [ 'product_id' => $product_id, 'item' => $item ];
+            }
+        }
+        return null;
+    }
+
+    private function find_ic_team_in_tournament( $ic, $tournament_id ) {
+        if ( empty( $ic ) || empty( $tournament_id ) ) {
+            return 0;
+        }
+
         $existing_players = get_posts([
             'post_type' => 'flms_player',
             'meta_key' => 'flms_ic',
@@ -337,18 +467,19 @@ class FLMS_Woo {
             'fields' => 'ids'
         ]);
 
-        foreach ($existing_players as $found_pid) {
-            $their_team = get_post_meta($found_pid, 'flms_team_id', true);
-            if ( ! $their_team ) continue;
+        foreach ( $existing_players as $found_pid ) {
+            $their_team = (int) get_post_meta( $found_pid, 'flms_team_id', true );
+            if ( ! $their_team ) {
+                continue;
+            }
 
-            $their_tour = get_post_meta($their_team, 'flms_tournament_id', true);
-            
-            if ( $their_tour == $tournament_id ) {
-                $other_team_name = get_the_title($their_team);
-                $errors->add( 'validation', "<strong>Error:</strong> The player '{$player_name}' (ID: $ic) is already registered to team '<strong>$other_team_name</strong>' in this tournament. <br>A player cannot play for two teams in the same competition." );
-                return; 
+            $their_tour = (int) get_post_meta( $their_team, 'flms_tournament_id', true );
+            if ( $their_tour === (int) $tournament_id ) {
+                return $their_team;
             }
         }
+
+        return 0;
     }
     
     // --- DISPLAY UI (FIXED: NO DUPLICATES IN CHECKLIST) ---

@@ -5,13 +5,6 @@ class FLMS_Player_Directory {
 
     public function __construct() {
         add_shortcode( 'flms_player_directory', [ $this, 'render_directory' ] );
-        add_action( 'save_post_flms_match', [ $this, 'clear_directory_cache' ] );
-        add_action( 'save_post_flms_player', [ $this, 'clear_directory_cache' ] );
-    }
-
-    public function clear_directory_cache() {
-        global $wpdb;
-        $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_flms_dir_%'" );
     }
 
     public function render_directory( $atts ) {
@@ -24,9 +17,10 @@ class FLMS_Player_Directory {
         $paged = ( get_query_var( 'paged' ) ) ? absint( get_query_var( 'paged' ) ) : 1;
         if ( $paged < 1 ) { $paged = 1; }
 
-        $unique_players = false; 
+        $list_cache_key = 'flms_dir_' . FLMS_Cache_Bump::version() . '_' . md5( $search_query . '|' . $tour_filter );
+        $unique_players = get_transient( $list_cache_key );
 
-        if ( false === $unique_players ) {
+        if ( false === $unique_players || ! is_array( $unique_players ) ) {
             $args = [
                 'post_type'      => 'flms_player',
                 'posts_per_page' => -1, 
@@ -97,6 +91,14 @@ class FLMS_Player_Directory {
                             }
                         }
 
+                        $modified_ts = strtotime( (string) get_post_field( 'post_modified_gmt', $pid ) );
+                        if ( ! $modified_ts ) {
+                            $modified_ts = strtotime( (string) get_post_field( 'post_modified', $pid ) );
+                        }
+                        if ( ! $modified_ts ) {
+                            $modified_ts = (int) $pid;
+                        }
+
                         if ( isset( $unique_players[$key] ) ) {
                             // Merge Stats
                             foreach($stats as $k => $v) $unique_players[$key][$k] += $v;
@@ -118,12 +120,12 @@ class FLMS_Player_Directory {
                                 else $unique_players[$key]['pos'] .= ' / ' . $pos;
                             }
                             
-                            // Keep Longest Name & Latest ID
-                            $current_name = $unique_players[$key]['name'];
-                            $new_name = get_the_title();
-                            if ( strlen($new_name) > strlen($current_name) ) {
-                                $unique_players[$key]['name'] = $new_name;
-                                $unique_players[$key]['id'] = $pid; 
+                            // Keep identity fields from the most recently updated record.
+                            if ( $modified_ts > (int) $unique_players[$key]['modified_ts'] ) {
+                                $unique_players[$key]['name'] = get_the_title();
+                                $unique_players[$key]['id'] = $pid;
+                                $unique_players[$key]['num'] = $str('flms_number') ?: '-';
+                                $unique_players[$key]['modified_ts'] = $modified_ts;
                             }
                         } else {
                             $unique_players[$key] = array_merge($stats, [
@@ -131,7 +133,8 @@ class FLMS_Player_Directory {
                                 'name' => get_the_title(),
                                 'team' => $team_name_display,
                                 'num'  => $str('flms_number') ?: '-',
-                                'pos'  => $pos
+                                'pos'  => $pos,
+                                'modified_ts' => $modified_ts
                             ]);
                         }
                     }
@@ -140,6 +143,7 @@ class FLMS_Player_Directory {
 
                 uasort($unique_players, function($a, $b) { return $b['points'] <=> $a['points']; });
             }
+            set_transient( $list_cache_key, $unique_players, 6 * HOUR_IN_SECONDS );
         }
 
         // Pagination

@@ -2,12 +2,6 @@
 class FLMS_Table_Shortcode {
     public function __construct() {
         add_shortcode( 'flms_league_table', [ $this, 'render_table' ] );
-        add_action( 'save_post_flms_match', [ $this, 'clear_standings_cache' ] );
-    }
-
-    public function clear_standings_cache() {
-        global $wpdb;
-        $wpdb->query( "DELETE FROM {$wpdb->options} WHERE option_name LIKE '_transient_flms_table_%'" );
     }
 
     public function render_table( $atts ) {
@@ -20,7 +14,7 @@ class FLMS_Table_Shortcode {
             return $this->render_group_tables( $tid );
         }
 
-        $cache_key = 'flms_table_' . $tid . '_' . $atts['limit'] . '_' . $atts['layout'];
+        $cache_key = 'flms_table_' . FLMS_Cache_Bump::version() . '_' . $tid . '_' . $atts['limit'] . '_' . $atts['layout'];
         $cached_html = get_transient( $cache_key );
 
         if ( false !== $cached_html ) {

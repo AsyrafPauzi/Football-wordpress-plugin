@@ -142,67 +142,140 @@ class FLMS_Manager_Dashboard {
 
         $announcement_count = (int) count( (array) $announcement_ids );
         $total_inbox_badge = (int) $open_requests_count + (int) $announcement_count;
+        $my_pending_transfers = get_posts(
+            [
+                'post_type'      => 'flms_transfer',
+                'meta_key'       => '_to_team',
+                'meta_value'     => $active_team_id,
+                'post_status'    => 'private',
+                'posts_per_page' => -1,
+            ]
+        );
+        $finance_matches = get_posts(
+            [
+                'post_type'      => 'flms_match',
+                'posts_per_page' => 10,
+                'meta_query'     => [
+                    'relation' => 'AND',
+                    [
+                        'relation' => 'OR',
+                        [ 'key' => 'flms_home_team', 'value' => $active_team_id ],
+                        [ 'key' => 'flms_away_team', 'value' => $active_team_id ],
+                    ],
+                ],
+                'orderby'        => 'meta_value',
+                'meta_key'       => 'flms_match_date',
+                'order'          => 'DESC',
+            ]
+        );
+        $unpaid_match_fee_count = 0;
+        foreach ( $finance_matches as $fm_count_item ) {
+            $match_id    = $fm_count_item->ID;
+            $home_id     = get_post_meta( $match_id, 'flms_home_team', true );
+            $is_home_row = ( (int) $active_team_id === (int) $home_id );
+            $paid_status = $is_home_row ? get_post_meta( $match_id, '_flms_paid_home', true ) : get_post_meta( $match_id, '_flms_paid_away', true );
+            if ( 'yes' !== $paid_status ) {
+                $unpaid_match_fee_count++;
+            }
+        }
 
         ob_start();
         ?>
-        <div class="flms-dashboard-wrapper">
-            <div class="flms-dash-quick-links" style="margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #eee;">
-                <a href="<?php echo esc_url( $inbox_url ); ?>" style="display:inline-flex; align-items:center; gap:8px; padding:8px 16px; margin-right:8px; background:#f5f5f5; color:#333; text-decoration:none; border-radius:6px; font-size:13px; font-weight:600;">
-                    Inbox
-                    <span class="flms-tab-badge" style="margin-left:0;" title="Open requests + active announcements"><?php echo (int) $total_inbox_badge; ?></span>
-                </a>
-                <a href="<?php echo esc_url( $create_url ); ?>" style="display:inline-block; padding:8px 16px; background:#f5f5f5; color:#333; text-decoration:none; border-radius:6px; font-size:13px; font-weight:600;">Create Friendly Match</a>
-            </div>
-            
-            <!-- TEAM SWITCHER -->
-            <?php if(count($my_teams) > 1): ?>
-            <div class="flms-team-switcher" style="background:#f0f0f0; padding:15px; border-radius:8px 8px 0 0; border-bottom:1px solid #ddd; margin:-20px -20px 20px -20px;">
-                <form method="get" style="display:flex; align-items:center; gap:10px; justify-content:space-between;">
-                    <label style="font-weight:bold; color:#333;">Select Tournament / Team:</label>
-                    <select name="manage_team" onchange="this.form.submit()" style="padding:8px; border-radius:4px; border:1px solid #ccc; max-width:300px;">
-                        <?php foreach($my_teams as $t): 
-                            $t_tour_id = get_post_meta($t->ID, 'flms_tournament_id', true);
-                            $t_tour_name = $t_tour_id ? get_the_title($t_tour_id) : 'Unassigned';
-                        ?>
-                            <option value="<?php echo $t->ID; ?>" <?php selected($active_team_id, $t->ID); ?>>
-                                <?php echo esc_html($t_tour_name . ' - ' . $t->post_title); ?>
+        <div class="flms-dashboard-wrapper flms-mgr-dashboard" id="flms-mgr-dashboard">
+            <div class="flms-mgr-shell">
+                <aside class="flms-mgr-shell__sidebar">
+                    <h2 class="flms-mgr-sidebar__title"><?php esc_html_e( 'Manager Menu', 'flms' ); ?></h2>
+                    <nav class="flms-mgr-sidebar__nav" aria-label="<?php esc_attr_e( 'Manager navigation', 'flms' ); ?>">
+                        <a class="flms-mgr-sidebar__link is-active" href="#flms-mgr-dashboard"><?php esc_html_e( 'Dashboard', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="#flms-mgr-players"><?php esc_html_e( 'Players', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'Create Friendly Match', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="<?php echo esc_url( $inbox_url ); ?>"><?php esc_html_e( 'Inbox', 'flms' ); ?> <span class="flms-mgr-badge"><?php echo (int) $total_inbox_badge; ?></span></a>
+                        <a class="flms-mgr-sidebar__link" href="#flms-mgr-settings"><?php esc_html_e( 'Team Settings', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="#flms-mgr-fees"><?php esc_html_e( 'Match Fees', 'flms' ); ?> <span class="flms-mgr-badge"><?php echo (int) $unpaid_match_fee_count; ?></span></a>
+                        <div class="flms-mgr-sidebar__group">
+                            <span class="flms-mgr-sidebar__group-label"><?php esc_html_e( 'Matches', 'flms' ); ?></span>
+                            <a class="flms-mgr-sidebar__sublink" href="<?php echo esc_url( add_query_arg( [ 'manage_team' => $active_team_id, 'history_tab' => 'friendly' ], remove_query_arg( [ 'paged' ] ) ) ); ?>"><?php esc_html_e( 'Friendly', 'flms' ); ?></a>
+                            <a class="flms-mgr-sidebar__sublink" href="<?php echo esc_url( add_query_arg( [ 'manage_team' => $active_team_id, 'history_tab' => 'league' ], remove_query_arg( [ 'paged' ] ) ) ); ?>"><?php esc_html_e( 'League', 'flms' ); ?></a>
+                        </div>
+                    </nav>
+                </aside>
+                <div class="flms-mgr-shell__main">
+            <div class="flms-mgr-dashboard__inner">
+
+            <?php if ( count( $my_teams ) > 1 ) : ?>
+            <section class="flms-mgr-card flms-mgr-card--switcher" aria-labelledby="flms-mgr-switcher-heading">
+                <h2 id="flms-mgr-switcher-heading" class="flms-mgr-card__title flms-mgr-card__title--sm"><?php esc_html_e( 'Switch team', 'flms' ); ?></h2>
+                <p class="flms-mgr-card__hint"><?php esc_html_e( 'Choose which tournament team you are managing.', 'flms' ); ?></p>
+                <form method="get" class="flms-mgr-field-row">
+                    <label class="flms-mgr-label" for="flms-mgr-manage-team"><?php esc_html_e( 'Tournament / team', 'flms' ); ?></label>
+                    <select class="flms-mgr-input flms-mgr-input--select" id="flms-mgr-manage-team" name="manage_team" onchange="this.form.submit()">
+                        <?php foreach ( $my_teams as $t ) :
+                            $t_tour_id   = get_post_meta( $t->ID, 'flms_tournament_id', true );
+                            $t_tour_name = $t_tour_id ? get_the_title( $t_tour_id ) : __( 'Unassigned', 'flms' );
+                            ?>
+                            <option value="<?php echo (int) $t->ID; ?>" <?php selected( $active_team_id, $t->ID ); ?>>
+                                <?php echo esc_html( $t_tour_name . ' — ' . $t->post_title ); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
                 </form>
-            </div>
+            </section>
             <?php endif; ?>
 
-            <!-- HEADER -->
-            <div class="flms-dash-header">
-                <div style="display:flex; align-items:center; gap:15px;">
-                    <?php if($logo_url): ?>
-                        <img src="<?php echo esc_url($logo_url); ?>" class="team-dash-logo">
-                    <?php else: ?>
-                        <div class="team-dash-logo-placeholder">Logo</div>
+            <header class="flms-mgr-hero">
+                <div class="flms-mgr-hero__identity">
+                    <?php if ( $logo_url ) : ?>
+                        <img src="<?php echo esc_url( $logo_url ); ?>" alt="" class="flms-mgr-hero__logo" width="72" height="72">
+                    <?php else : ?>
+                        <div class="flms-mgr-hero__logo flms-mgr-hero__logo--empty" aria-hidden="true"><?php esc_html_e( 'Logo', 'flms' ); ?></div>
                     <?php endif; ?>
-                    <div>
-                        <h2 style="margin:0; font-size:24px;"><?php echo esc_html($active_team->post_title); ?></h2>
-                        <div style="font-size:12px; color:#888; font-weight:bold; margin-bottom:5px;"><?php echo esc_html($tour_name); ?></div>
-                        <div class="flms-kit-display">
-                            <span class="kit-badge" style="background:<?php echo esc_attr($home_color); ?>;" title="Home">H</span>
-                            <span class="kit-badge" style="background:<?php echo esc_attr($away_color); ?>; border:1px solid #ddd; color:#333;" title="Away">A</span>
-                            <span style="font-size:11px; margin-left:10px; color:#666;">Window: <?php echo $status_text; ?></span>
+                    <div class="flms-mgr-hero__copy">
+                        <h1 class="flms-mgr-hero__title"><?php echo esc_html( $active_team->post_title ); ?></h1>
+                        <p class="flms-mgr-hero__subtitle"><?php echo esc_html( $tour_name ); ?></p>
+                        <div class="flms-mgr-hero__kits" role="group" aria-label="<?php esc_attr_e( 'Kits and transfer window', 'flms' ); ?>">
+                            <span class="flms-mgr-kit" style="background:<?php echo esc_attr( $home_color ); ?>;" title="<?php esc_attr_e( 'Home kit', 'flms' ); ?>">H</span>
+                            <span class="flms-mgr-kit flms-mgr-kit--away" style="background:<?php echo esc_attr( $away_color ); ?>;" title="<?php esc_attr_e( 'Away kit', 'flms' ); ?>">A</span>
+                            <span class="flms-mgr-pill"><?php echo esc_html( $status_text ); ?></span>
                         </div>
                     </div>
                 </div>
-                
-                <form method="post" enctype="multipart/form-data" style="text-align:right;">
-                    <label class="btn-tiny" style="cursor:pointer;">
-                        Update Logo <input type="file" name="team_logo" accept="image/*" style="display:none;" onchange="this.form.submit()">
+                <form method="post" enctype="multipart/form-data" class="flms-mgr-hero__actions">
+                    <label class="flms-mgr-btn flms-mgr-btn--secondary">
+                        <span class="flms-mgr-btn__label"><?php esc_html_e( 'Update logo', 'flms' ); ?></span>
+                        <input type="file" name="team_logo" accept="image/*" class="flms-mgr-sr-only" onchange="this.form.submit()">
                     </label>
                     <input type="hidden" name="flms_action" value="update_logo">
-                    <input type="hidden" name="team_id" value="<?php echo $active_team_id; ?>">
-                    <?php wp_nonce_field('flms_logo_nonce'); ?>
+                    <input type="hidden" name="team_id" value="<?php echo (int) $active_team_id; ?>">
+                    <?php wp_nonce_field( 'flms_logo_nonce' ); ?>
                 </form>
-            </div>
+            </header>
 
-            <div class="flms-history-tabs">
+            <section class="flms-mgr-kpi-row" aria-label="<?php esc_attr_e( 'Dashboard quick stats', 'flms' ); ?>">
+                <article class="flms-mgr-kpi">
+                    <p class="flms-mgr-kpi__label"><?php esc_html_e( 'Unpaid match fees', 'flms' ); ?></p>
+                    <p class="flms-mgr-kpi__value"><?php echo (int) $unpaid_match_fee_count; ?></p>
+                    <a class="flms-mgr-kpi__link" href="#flms-mgr-fees"><?php esc_html_e( 'Review fees', 'flms' ); ?></a>
+                </article>
+                <article class="flms-mgr-kpi">
+                    <p class="flms-mgr-kpi__label"><?php esc_html_e( 'Incoming requests', 'flms' ); ?></p>
+                    <p class="flms-mgr-kpi__value"><?php echo (int) count( $incoming_requests ); ?></p>
+                    <a class="flms-mgr-kpi__link" href="#flms-mgr-requests"><?php esc_html_e( 'Open requests', 'flms' ); ?></a>
+                </article>
+                <article class="flms-mgr-kpi">
+                    <p class="flms-mgr-kpi__label"><?php esc_html_e( 'Transfers to pay', 'flms' ); ?></p>
+                    <p class="flms-mgr-kpi__value"><?php echo (int) count( $my_pending_transfers ); ?></p>
+                    <a class="flms-mgr-kpi__link" href="#flms-mgr-transfer-payments"><?php esc_html_e( 'Pay now', 'flms' ); ?></a>
+                </article>
+                <article class="flms-mgr-kpi">
+                    <p class="flms-mgr-kpi__label"><?php esc_html_e( 'Quick actions', 'flms' ); ?></p>
+                    <div class="flms-mgr-kpi__actions">
+                        <a class="flms-mgr-btn flms-mgr-btn--sm flms-mgr-btn--secondary" href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'Create Friendly', 'flms' ); ?></a>
+                        <a class="flms-mgr-btn flms-mgr-btn--sm flms-mgr-btn--ghost" href="<?php echo esc_url( $inbox_url ); ?>"><?php esc_html_e( 'Open Inbox', 'flms' ); ?></a>
+                    </div>
+                </article>
+            </section>
+
+            <div id="flms-mgr-matches" class="flms-mgr-segmented" role="tablist" aria-label="<?php esc_attr_e( 'Match history', 'flms' ); ?>">
                 <?php
                 $friendly_tab_url = esc_url( add_query_arg(
                     [ 'manage_team' => $active_team_id, 'history_tab' => 'friendly' ],
@@ -213,271 +286,465 @@ class FLMS_Manager_Dashboard {
                     remove_query_arg( [ 'paged' ] )
                 ) );
                 ?>
-                <a class="flms-history-tab <?php echo $history_tab === 'friendly' ? 'is-active' : ''; ?>" href="<?php echo $friendly_tab_url; ?>">Completed Friendly Matches</a>
-                <a class="flms-history-tab <?php echo $history_tab === 'league' ? 'is-active' : ''; ?>" href="<?php echo $league_tab_url; ?>">Completed League Matches</a>
+                <a class="flms-history-tab flms-mgr-tab <?php echo $history_tab === 'friendly' ? 'is-active' : ''; ?>" href="<?php echo $friendly_tab_url; ?>"><?php esc_html_e( 'Friendly matches', 'flms' ); ?></a>
+                <a class="flms-history-tab flms-mgr-tab <?php echo $history_tab === 'league' ? 'is-active' : ''; ?>" href="<?php echo $league_tab_url; ?>"><?php esc_html_e( 'League matches', 'flms' ); ?></a>
             </div>
 
             <?php echo $this->render_completed_matches_panel( $active_team_id, $history_tab ); ?>
 
-            <!-- 1. REQUESTS -->
-            <?php if (!empty($incoming_requests)): ?>
-            <div class="flms-requests-box">
-                <h3>⚠️ Transfer Requests</h3>
-                <table class="flms-league-table">
-                    <thead><tr><th>Player</th><th>From</th><th>Action</th></tr></thead>
-                    <tbody>
-                        <?php foreach($incoming_requests as $req): $pid = get_post_meta($req->ID, '_player_id', true); $to_team = get_post_meta($req->ID, '_to_team', true); $p_name = get_the_title($pid); $t_name = get_the_title($to_team); ?>
-                        <tr><td><strong><?php echo esc_html($p_name); ?></strong></td><td><?php echo esc_html($t_name); ?></td><td><form method="post" style="display:inline;"><input type="hidden" name="req_id" value="<?php echo $req->ID; ?>"><?php wp_nonce_field('flms_approve_nonce'); ?><button type="submit" name="flms_transfer_act" value="approve" class="button btn-green">Approve</button><button type="submit" name="flms_transfer_act" value="reject" class="button btn-red">Reject</button></form></td></tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <?php endif; ?>
-
-            <!-- 2. PENDING PAYMENTS -->
-            <?php 
-            $my_pending_transfers = get_posts([ 'post_type' => 'flms_transfer', 'meta_key' => '_to_team', 'meta_value' => $active_team_id, 'post_status' => 'private', 'posts_per_page' => -1 ]);
-            if ( ! empty($my_pending_transfers) ) : ?>
-            <div class="flms-finance-box" style="border-color: #f39c12; background: #fffdf5;">
-                <h3 style="color:#d35400;">⚠️ Transfers Awaiting Payment</h3>
-                <table class="flms-league-table">
-                    <thead><tr><th>Player</th><th>Status</th><th>Action</th></tr></thead>
-                    <tbody>
-                        <?php foreach($my_pending_transfers as $trans): $pid = get_post_meta($trans->ID, '_player_id', true); $p_name = get_the_title($pid); ?>
-                        <tr><td><strong><?php echo esc_html($p_name); ?></strong></td><td style="color:#e67e22; font-weight:bold;">Approved (Fee Required)</td><td><form method="post"><input type="hidden" name="flms_action" value="pay_transfer_fee"><input type="hidden" name="transfer_id" value="<?php echo $trans->ID; ?>"><input type="hidden" name="player_id" value="<?php echo $pid; ?>"><input type="hidden" name="target_team" value="<?php echo $active_team_id; ?>"><?php wp_nonce_field('flms_pay_transfer_nonce'); ?><button type="submit" class="button" style="background:#d35400; color:#fff; border:none;">Pay Fee (RM5)</button></form></td></tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-            <?php endif; ?>
-
-            <!-- LINEUP -->
-            <?php if(!empty($next_match)): $mid = $next_match[0]->ID; $hid = get_post_meta($mid, 'flms_home_team', true); $aid = get_post_meta($mid, 'flms_away_team', true); $is_home = ($hid == $active_team_id); $opponent_id = $is_home ? $aid : $hid; $opponent_name = get_the_title($opponent_id); $date = get_post_meta($mid, 'flms_match_date', true); $meta_key = $is_home ? '_flms_lineup_home' : '_flms_lineup_away'; $saved_lineup = get_post_meta($mid, $meta_key, true) ?: []; ?>
-            <div class="flms-lineup-box">
-                <h3>📋 Next Match Lineup</h3>
-                <p><strong>VS <?php echo $opponent_name; ?></strong> (<?php echo $date ? date('d M', strtotime($date)) : 'Date TBD'; ?>)</p>
-                <form method="post">
-                    <div class="lineup-list">
-                        <?php foreach($players as $p): $checked = in_array($p->ID, $saved_lineup) ? 'checked' : ''; ?>
-                        <label><input type="checkbox" name="match_lineup[]" value="<?php echo $p->ID; ?>" <?php echo $checked; ?>> <?php echo esc_html($p->post_title); ?></label>
-                        <?php endforeach; ?>
-                    </div>
-                    <input type="hidden" name="flms_action" value="save_lineup"><input type="hidden" name="match_id" value="<?php echo $mid; ?>"><input type="hidden" name="is_home" value="<?php echo $is_home ? '1' : '0'; ?>"><?php wp_nonce_field('flms_lineup_nonce'); ?>
-                    <button type="submit" class="button btn-blue">Save Lineup</button>
-                </form>
-            </div>
-            <?php endif; ?>
-
-            <!-- MATCH FEES -->
-           <div class="flms-finance-box">
-                <h3>💰 Match Fees</h3>
-                <div class="flms-table-responsive">
-                    <table class="flms-league-table">
-                        <thead><tr><th>Match</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+            <?php if ( ! empty( $incoming_requests ) ) : ?>
+            <section id="flms-mgr-requests" class="flms-mgr-card flms-mgr-card--alert" aria-labelledby="flms-mgr-incoming-heading">
+                <div class="flms-mgr-card__head">
+                    <h2 id="flms-mgr-incoming-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Incoming transfer requests', 'flms' ); ?></h2>
+                    <p class="flms-mgr-card__hint"><?php esc_html_e( 'Approve or reject players moving to your squad.', 'flms' ); ?></p>
+                </div>
+                <div class="flms-mgr-scroll">
+                    <table class="flms-league-table flms-mgr-table">
+                        <thead><tr><th><?php esc_html_e( 'Player', 'flms' ); ?></th><th><?php esc_html_e( 'From', 'flms' ); ?></th><th class="flms-mgr-table__actions"><?php esc_html_e( 'Action', 'flms' ); ?></th></tr></thead>
                         <tbody>
-                            <?php 
-                            // UPDATED QUERY: Removed the check that hid completed matches.
-                            // Now it shows all matches (Limit 10) so you can pay for past games too.
-                            $finance_matches = get_posts([
-                                'post_type' => 'flms_match',
-                                'posts_per_page' => 10, // Increased limit to show history
-                                'meta_query' => [
-                                    'relation' => 'AND',
-                                    // Removed the "!= completed" check here
-                                    [ 
-                                        'relation' => 'OR', 
-                                        ['key'=>'flms_home_team','value'=>$active_team_id], 
-                                        ['key'=>'flms_away_team','value'=>$active_team_id] 
-                                    ] 
-                                ],
-                                'orderby' => 'meta_value',
-                                'meta_key' => 'flms_match_date',
-                                'order' => 'DESC' // Show newest/upcoming first (or change to ASC if you want oldest debt first)
-                            ]);
-
-                            if(empty($finance_matches)): ?>
-                                <tr><td colspan="4" style="text-align:center;">No match records found.</td></tr>
-                            <?php else: 
-                                foreach($finance_matches as $fm): 
-                                    $mid = $fm->ID; 
-                                    $date = get_post_meta($mid, 'flms_match_date', true); 
-                                    $hid = get_post_meta($mid, 'flms_home_team', true); 
-                                    $aid = get_post_meta($mid, 'flms_away_team', true); 
-                                    
-                                    $is_home = ($active_team_id == $hid);
-                                    $opponent_id = $is_home ? $aid : $hid;
-                                    $opponent_name = get_the_title($opponent_id);
-
-                                    // Payment Check
-                                    $paid = $is_home ? get_post_meta($mid, '_flms_paid_home', true) : get_post_meta($mid, '_flms_paid_away', true); 
-                                    $fee = get_post_meta($mid, '_flms_match_fee', true) ?: '100'; 
-                            ?>
+                            <?php foreach ( $incoming_requests as $req ) :
+                                $pid     = get_post_meta( $req->ID, '_player_id', true );
+                                $from_id = (int) get_post_meta( $req->ID, '_from_team', true );
+                                $p_name  = get_the_title( $pid );
+                                $t_name  = $from_id ? get_the_title( $from_id ) : '—';
+                                ?>
                             <tr>
-                                <td>vs <strong><?php echo esc_html($opponent_name); ?></strong></td>
-                                <td><?php echo esc_html($date); ?></td>
-                                <td>
-                                    <?php if($paid === 'yes'): ?>
-                                        <span style="color:green; font-weight:bold;">✅ Paid</span>
-                                    <?php else: ?>
-                                        <span style="color:red; font-weight:bold;">❌ Unpaid (RM<?php echo $fee; ?>)</span>
-                                    <?php endif; ?>
-                                </td>
-                                <td>
-                                    <?php if($paid !== 'yes'): ?>
-                                        <form method="post">
-                                            <input type="hidden" name="flms_action" value="pay_match_fee">
-                                            <input type="hidden" name="match_id" value="<?php echo $mid; ?>">
-                                            <input type="hidden" name="team_id" value="<?php echo $active_team_id; ?>">
-                                            <?php wp_nonce_field('flms_pay_fee_nonce'); ?>
-                                            <button type="submit" class="button btn-tiny">Pay Now</button>
-                                        </form>
-                                    <?php else: ?>
-                                        <span style="color:#ccc;">-</span>
-                                    <?php endif; ?>
+                                <td data-label="<?php esc_attr_e( 'Player', 'flms' ); ?>"><strong><?php echo esc_html( $p_name ); ?></strong></td>
+                                <td data-label="<?php esc_attr_e( 'From', 'flms' ); ?>"><?php echo esc_html( $t_name ); ?></td>
+                                <td class="flms-mgr-table__actions" data-label="<?php esc_attr_e( 'Action', 'flms' ); ?>">
+                                    <form method="post" class="flms-mgr-inline-actions">
+                                        <input type="hidden" name="req_id" value="<?php echo (int) $req->ID; ?>">
+                                        <?php wp_nonce_field( 'flms_approve_nonce' ); ?>
+                                        <button type="submit" name="flms_transfer_act" value="approve" class="flms-mgr-btn flms-mgr-btn--success flms-mgr-btn--sm"><?php esc_html_e( 'Approve', 'flms' ); ?></button>
+                                        <button type="submit" name="flms_transfer_act" value="reject" class="flms-mgr-btn flms-mgr-btn--danger flms-mgr-btn--sm"><?php esc_html_e( 'Reject', 'flms' ); ?></button>
+                                    </form>
                                 </td>
                             </tr>
-                            <?php endforeach; endif; ?>
+                            <?php endforeach; ?>
                         </tbody>
                     </table>
                 </div>
-            </div>
+            </section>
+            <?php endif; ?>
 
+            <?php
+            if ( ! empty( $my_pending_transfers ) ) :
+                ?>
+            <section id="flms-mgr-transfer-payments" class="flms-mgr-card flms-mgr-card--warning" aria-labelledby="flms-mgr-pending-transfer-heading">
+                <div class="flms-mgr-card__head">
+                    <h2 id="flms-mgr-pending-transfer-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Transfers awaiting payment', 'flms' ); ?></h2>
+                    <p class="flms-mgr-card__hint"><?php esc_html_e( 'Complete the fee to finalize approved signings.', 'flms' ); ?></p>
+                </div>
+                <div class="flms-mgr-scroll">
+                    <table class="flms-league-table flms-mgr-table">
+                        <thead><tr><th><?php esc_html_e( 'Player', 'flms' ); ?></th><th><?php esc_html_e( 'Status', 'flms' ); ?></th><th class="flms-mgr-table__actions"><?php esc_html_e( 'Action', 'flms' ); ?></th></tr></thead>
+                        <tbody>
+                            <?php foreach ( $my_pending_transfers as $trans ) :
+                                $pid   = get_post_meta( $trans->ID, '_player_id', true );
+                                $p_name = get_the_title( $pid );
+                                ?>
+                            <tr>
+                                <td data-label="<?php esc_attr_e( 'Player', 'flms' ); ?>"><strong><?php echo esc_html( $p_name ); ?></strong></td>
+                                <td data-label="<?php esc_attr_e( 'Status', 'flms' ); ?>"><span class="flms-mgr-status flms-mgr-status--pending"><?php esc_html_e( 'Approved — fee required', 'flms' ); ?></span></td>
+                                <td class="flms-mgr-table__actions" data-label="<?php esc_attr_e( 'Action', 'flms' ); ?>">
+                                    <form method="post" class="flms-mgr-stack-form">
+                                        <input type="hidden" name="flms_action" value="pay_transfer_fee">
+                                        <input type="hidden" name="transfer_id" value="<?php echo (int) $trans->ID; ?>">
+                                        <input type="hidden" name="player_id" value="<?php echo (int) $pid; ?>">
+                                        <input type="hidden" name="target_team" value="<?php echo (int) $active_team_id; ?>">
+                                        <?php wp_nonce_field( 'flms_pay_transfer_nonce' ); ?>
+                                        <button type="submit" class="flms-mgr-btn flms-mgr-btn--accent"><?php esc_html_e( 'Pay fee (RM5)', 'flms' ); ?></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+            <?php endif; ?>
 
-            <!-- ROSTER TABLE -->
-            <h3>Full Squad</h3>
-            <div class="flms-table-responsive" style="overflow-x:auto;">
-                <table class="flms-league-table flms-squad-table">
-                    <thead><tr><th width="50">Img</th><th width="40">No.</th><th class="col-name">Name</th><th>Pos</th><th>Age</th><th width="120" style="text-align:right;">Action</th></tr></thead>
-                    <tbody>
-                        <?php foreach($players as $p): $pos=get_post_meta($p->ID,'flms_position',true)?:'-'; $age=get_post_meta($p->ID,'flms_age',true)?:'-'; $ic=get_post_meta($p->ID,'flms_ic',true)?:''; $num=get_post_meta($p->ID,'flms_number',true)?:'-'; $p_img = get_the_post_thumbnail_url($p->ID, 'thumbnail'); ?>
-                        <tr data-id="<?php echo $p->ID; ?>" data-name="<?php echo esc_attr($p->post_title); ?>" data-num="<?php echo esc_attr($num); ?>" data-pos="<?php echo esc_attr($pos); ?>" data-age="<?php echo esc_attr($age); ?>" data-ic="<?php echo esc_attr($ic); ?>">
-                            <td style="text-align:center;">
-                                <?php if($p_img): ?><img src="<?php echo esc_url($p_img); ?>" style="width:35px; height:35px; border-radius:50%; object-fit:cover; border:1px solid #eee;">
-                                <?php else: ?>
-                                    <form method="post" enctype="multipart/form-data" class="flms-upload-mini"><label class="upload-icon-btn" title="Upload Photo">📷<input type="file" name="player_photo" accept="image/*" onchange="this.form.submit()"></label><input type="hidden" name="flms_action" value="upload_player_photo"><input type="hidden" name="player_id" value="<?php echo $p->ID; ?>"><input type="hidden" name="team_id" value="<?php echo $active_team_id; ?>"><?php wp_nonce_field('flms_player_photo_nonce'); ?></form>
-                                <?php endif; ?>
-                            </td>
-                            <td><?php echo esc_html($num); ?></td><td class="player-name"><?php echo esc_html($p->post_title); ?></td><td><span class="flms-pos-badge"><?php echo esc_html($pos); ?></span></td><td><?php echo esc_html($age); ?></td>
-                            <td style="text-align:right; white-space:nowrap;">
-                                <button type="button" class="btn-text-blue edit-player-btn">Edit</button> 
-                                <?php if($stage !== 'locked'): ?><a href="?flms_action=remove_player&pid=<?php echo $p->ID; ?>&_wpnonce=<?php echo wp_create_nonce('flms_remove_'.$p->ID); ?>" class="btn-text-red" onclick="return confirm('Remove?');">Remove</a><?php endif; ?>
-                            </td>
-                        </tr>
+            <?php if ( ! empty( $next_match ) ) :
+                $mid           = $next_match[0]->ID;
+                $hid           = get_post_meta( $mid, 'flms_home_team', true );
+                $aid           = get_post_meta( $mid, 'flms_away_team', true );
+                $is_home       = ( (int) $hid === (int) $active_team_id );
+                $opponent_id   = $is_home ? $aid : $hid;
+                $opponent_name = get_the_title( $opponent_id );
+                $date          = get_post_meta( $mid, 'flms_match_date', true );
+                $meta_key      = $is_home ? '_flms_lineup_home' : '_flms_lineup_away';
+                $saved_lineup  = get_post_meta( $mid, $meta_key, true ) ?: [];
+                ?>
+            <section class="flms-mgr-card flms-mgr-card--lineup" aria-labelledby="flms-mgr-lineup-heading">
+                <div class="flms-mgr-card__head flms-mgr-card__head--row">
+                    <div>
+                        <h2 id="flms-mgr-lineup-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Next match lineup', 'flms' ); ?></h2>
+                        <p class="flms-mgr-card__hint">
+                            <?php
+                            printf(
+                                /* translators: 1: opponent name, 2: match date */
+                                esc_html__( 'vs %1$s · %2$s', 'flms' ),
+                                esc_html( $opponent_name ),
+                                esc_html( $date ? date( 'd M', strtotime( $date ) ) : __( 'Date TBD', 'flms' ) )
+                            );
+                            ?>
+                        </p>
+                    </div>
+                </div>
+                <form method="post" class="flms-mgr-lineup-form">
+                    <div class="flms-mgr-lineup-list" role="group" aria-label="<?php esc_attr_e( 'Select starting players', 'flms' ); ?>">
+                        <?php foreach ( $players as $p ) :
+                            $checked = in_array( $p->ID, $saved_lineup, true ) ? 'checked' : '';
+                            ?>
+                        <label class="flms-mgr-check">
+                            <input type="checkbox" name="match_lineup[]" value="<?php echo (int) $p->ID; ?>" <?php echo $checked; ?>>
+                            <span><?php echo esc_html( $p->post_title ); ?></span>
+                        </label>
                         <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
+                    </div>
+                    <input type="hidden" name="flms_action" value="save_lineup">
+                    <input type="hidden" name="match_id" value="<?php echo (int) $mid; ?>">
+                    <input type="hidden" name="is_home" value="<?php echo $is_home ? '1' : '0'; ?>">
+                    <?php wp_nonce_field( 'flms_lineup_nonce' ); ?>
+                    <button type="submit" class="flms-mgr-btn flms-mgr-btn--primary"><?php esc_html_e( 'Save lineup', 'flms' ); ?></button>
+                </form>
+            </section>
+            <?php endif; ?>
 
-            <!-- EDIT MODAL (UPDATED LABEL) -->
-            <div id="flms-edit-modal" class="flms-modal" style="display:none;">
-                <div class="flms-modal-content">
-                    <span class="close-modal">&times;</span>
-                    <h3>Edit Player Details</h3>
-                    <form method="post" enctype="multipart/form-data">
-                        <div class="flms-form-grid">
-                            <div class="form-group" style="grid-column:span 2;"><label>Profile Photo</label><input type="file" name="edit_photo" accept="image/*" style="border:1px solid #ddd; padding:5px; width:100%;"></div>
-                            <div class="form-group" style="grid-column:span 2;"><label>Full Name</label><input type="text" name="edit_name" id="edit_name" required></div>
-                            <div class="form-group"><label>Number</label><input type="number" name="edit_number" id="edit_number"></div>
-                            <div class="form-group"><label>Age</label><input type="number" name="edit_age" id="edit_age"></div>
-                            <div class="form-group"><label>Position</label><select name="edit_pos" id="edit_pos"><option value="GK">GK</option><option value="DEF">DEF</option><option value="MID">MID</option><option value="FWD">FWD</option></select></div>
-                            <div class="form-group" style="grid-column:span 2;"><label>IC / Passport Number</label><input type="text" name="edit_ic" id="edit_ic"></div>
+            <section id="flms-mgr-fees" class="flms-mgr-card" aria-labelledby="flms-mgr-fees-heading">
+                <div class="flms-mgr-card__head">
+                    <h2 id="flms-mgr-fees-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Match fees', 'flms' ); ?></h2>
+                    <p class="flms-mgr-card__hint"><?php esc_html_e( 'Pay outstanding fees for recent fixtures.', 'flms' ); ?></p>
+                </div>
+                <div class="flms-mgr-scroll flms-table-responsive">
+                    <table class="flms-league-table flms-mgr-table">
+                        <thead><tr><th><?php esc_html_e( 'Match', 'flms' ); ?></th><th><?php esc_html_e( 'Date', 'flms' ); ?></th><th><?php esc_html_e( 'Status', 'flms' ); ?></th><th class="flms-mgr-table__actions"><?php esc_html_e( 'Action', 'flms' ); ?></th></tr></thead>
+                        <tbody>
+                            <?php
+                            if ( empty( $finance_matches ) ) :
+                                ?>
+                                <tr><td colspan="4" class="flms-mgr-empty"><?php esc_html_e( 'No match records found.', 'flms' ); ?></td></tr>
+                            <?php else : ?>
+                                <?php
+                                foreach ( $finance_matches as $fm ) :
+                                    $mid           = $fm->ID;
+                                    $date          = get_post_meta( $mid, 'flms_match_date', true );
+                                    $hid           = get_post_meta( $mid, 'flms_home_team', true );
+                                    $aid           = get_post_meta( $mid, 'flms_away_team', true );
+                                    $is_home       = ( (int) $active_team_id === (int) $hid );
+                                    $opponent_id   = $is_home ? $aid : $hid;
+                                    $opponent_name = get_the_title( $opponent_id );
+                                    $paid          = $is_home ? get_post_meta( $mid, '_flms_paid_home', true ) : get_post_meta( $mid, '_flms_paid_away', true );
+                                    $fee           = get_post_meta( $mid, '_flms_match_fee', true ) ?: '100';
+                                    ?>
+                            <tr>
+                                <td data-label="<?php esc_attr_e( 'Match', 'flms' ); ?>"><?php echo esc_html__( 'vs', 'flms' ); ?> <strong><?php echo esc_html( $opponent_name ); ?></strong></td>
+                                <td data-label="<?php esc_attr_e( 'Date', 'flms' ); ?>"><?php echo esc_html( $date ); ?></td>
+                                <td data-label="<?php esc_attr_e( 'Status', 'flms' ); ?>">
+                                    <?php if ( 'yes' === $paid ) : ?>
+                                        <span class="flms-mgr-status flms-mgr-status--ok"><?php esc_html_e( 'Paid', 'flms' ); ?></span>
+                                    <?php else : ?>
+                                        <span class="flms-mgr-status flms-mgr-status--due"><?php echo esc_html( sprintf( /* translators: %s fee amount */ __( 'Unpaid · RM%s', 'flms' ), $fee ) ); ?></span>
+                                    <?php endif; ?>
+                                </td>
+                                <td class="flms-mgr-table__actions" data-label="<?php esc_attr_e( 'Action', 'flms' ); ?>">
+                                    <?php if ( 'yes' !== $paid ) : ?>
+                                        <form method="post" class="flms-mgr-stack-form">
+                                            <input type="hidden" name="flms_action" value="pay_match_fee">
+                                            <input type="hidden" name="match_id" value="<?php echo (int) $mid; ?>">
+                                            <input type="hidden" name="team_id" value="<?php echo (int) $active_team_id; ?>">
+                                            <?php wp_nonce_field( 'flms_pay_fee_nonce' ); ?>
+                                            <button type="submit" class="flms-mgr-btn flms-mgr-btn--primary flms-mgr-btn--sm"><?php esc_html_e( 'Pay now', 'flms' ); ?></button>
+                                        </form>
+                                    <?php else : ?>
+                                        <span class="flms-mgr-muted">—</span>
+                                    <?php endif; ?>
+                                </td>
+                            </tr>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <section id="flms-mgr-players" class="flms-mgr-card" aria-labelledby="flms-mgr-squad-heading">
+                <div class="flms-mgr-card__head">
+                    <h2 id="flms-mgr-squad-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Full squad', 'flms' ); ?></h2>
+                    <p class="flms-mgr-card__hint"><?php esc_html_e( 'Edit roster details, photos, and remove players when the window allows.', 'flms' ); ?></p>
+                </div>
+                <div class="flms-mgr-scroll flms-table-responsive">
+                    <table class="flms-league-table flms-squad-table flms-mgr-table">
+                        <thead>
+                            <tr>
+                                <th class="flms-mgr-table__thumb"><?php esc_html_e( 'Photo', 'flms' ); ?></th>
+                                <th><?php esc_html_e( 'No.', 'flms' ); ?></th>
+                                <th class="col-name"><?php esc_html_e( 'Name', 'flms' ); ?></th>
+                                <th><?php esc_html_e( 'Pos', 'flms' ); ?></th>
+                                <th><?php esc_html_e( 'Age', 'flms' ); ?></th>
+                                <th class="flms-mgr-table__actions"><?php esc_html_e( 'Actions', 'flms' ); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php
+                            foreach ( $players as $p ) :
+                                $pos   = get_post_meta( $p->ID, 'flms_position', true ) ?: '-';
+                                $age   = get_post_meta( $p->ID, 'flms_age', true ) ?: '-';
+                                $ic    = get_post_meta( $p->ID, 'flms_ic', true ) ?: '';
+                                $num   = get_post_meta( $p->ID, 'flms_number', true ) ?: '-';
+                                $p_img = get_the_post_thumbnail_url( $p->ID, 'thumbnail' );
+                                ?>
+                            <tr data-id="<?php echo (int) $p->ID; ?>" data-name="<?php echo esc_attr( $p->post_title ); ?>" data-num="<?php echo esc_attr( $num ); ?>" data-pos="<?php echo esc_attr( $pos ); ?>" data-age="<?php echo esc_attr( $age ); ?>" data-ic="<?php echo esc_attr( $ic ); ?>">
+                                <td class="flms-mgr-table__thumb" data-label="<?php esc_attr_e( 'Photo', 'flms' ); ?>">
+                                    <?php if ( $p_img ) : ?>
+                                        <img src="<?php echo esc_url( $p_img ); ?>" alt="" class="flms-mgr-avatar" width="40" height="40" loading="lazy">
+                                    <?php else : ?>
+                                        <form method="post" enctype="multipart/form-data" class="flms-upload-mini flms-mgr-upload-mini">
+                                            <label class="flms-mgr-upload-trigger" title="<?php esc_attr_e( 'Upload photo', 'flms' ); ?>">
+                                                <span aria-hidden="true">📷</span>
+                                                <input type="file" name="player_photo" accept="image/*" class="flms-mgr-sr-only" onchange="this.form.submit()">
+                                            </label>
+                                            <input type="hidden" name="flms_action" value="upload_player_photo">
+                                            <input type="hidden" name="player_id" value="<?php echo (int) $p->ID; ?>">
+                                            <input type="hidden" name="team_id" value="<?php echo (int) $active_team_id; ?>">
+                                            <?php wp_nonce_field( 'flms_player_photo_nonce' ); ?>
+                                        </form>
+                                    <?php endif; ?>
+                                </td>
+                                <td data-label="<?php esc_attr_e( 'No.', 'flms' ); ?>"><?php echo esc_html( $num ); ?></td>
+                                <td class="player-name" data-label="<?php esc_attr_e( 'Name', 'flms' ); ?>"><?php echo esc_html( $p->post_title ); ?></td>
+                                <td data-label="<?php esc_attr_e( 'Pos', 'flms' ); ?>"><span class="flms-pos-badge"><?php echo esc_html( $pos ); ?></span></td>
+                                <td data-label="<?php esc_attr_e( 'Age', 'flms' ); ?>"><?php echo esc_html( $age ); ?></td>
+                                <td class="flms-mgr-table__actions" data-label="<?php esc_attr_e( 'Actions', 'flms' ); ?>">
+                                    <div class="flms-mgr-row-actions">
+                                        <button type="button" class="flms-mgr-btn flms-mgr-btn--ghost flms-mgr-btn--sm edit-player-btn"><?php esc_html_e( 'Edit', 'flms' ); ?></button>
+                                        <?php if ( 'locked' !== $stage ) : ?>
+                                            <a href="?flms_action=remove_player&amp;pid=<?php echo (int) $p->ID; ?>&amp;_wpnonce=<?php echo esc_attr( wp_create_nonce( 'flms_remove_' . $p->ID ) ); ?>" class="flms-mgr-btn flms-mgr-btn--danger flms-mgr-btn--sm flms-mgr-btn--link" onclick="return confirm('<?php echo esc_js( __( 'Remove this player?', 'flms' ) ); ?>');"><?php esc_html_e( 'Remove', 'flms' ); ?></a>
+                                        <?php endif; ?>
+                                    </div>
+                                </td>
+                            </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <div id="flms-edit-modal" class="flms-modal flms-mgr-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="flms-mgr-edit-title">
+                <div class="flms-modal-content flms-mgr-modal__dialog">
+                    <button type="button" class="close-modal flms-mgr-modal__close" aria-label="<?php esc_attr_e( 'Close', 'flms' ); ?>">&times;</button>
+                    <h3 id="flms-mgr-edit-title" class="flms-mgr-modal__title"><?php esc_html_e( 'Edit player', 'flms' ); ?></h3>
+                    <form method="post" enctype="multipart/form-data" class="flms-mgr-modal__form">
+                        <div class="flms-form-grid flms-mgr-form-grid">
+                            <div class="form-group flms-mgr-field flms-mgr-field--full">
+                                <label class="flms-mgr-label" for="edit_photo"><?php esc_html_e( 'Profile photo', 'flms' ); ?></label>
+                                <input class="flms-mgr-input" id="edit_photo" type="file" name="edit_photo" accept="image/*">
+                            </div>
+                            <div class="form-group flms-mgr-field flms-mgr-field--full">
+                                <label class="flms-mgr-label" for="edit_name"><?php esc_html_e( 'Full name', 'flms' ); ?></label>
+                                <input class="flms-mgr-input" type="text" name="edit_name" id="edit_name" required>
+                            </div>
+                            <div class="form-group flms-mgr-field">
+                                <label class="flms-mgr-label" for="edit_number"><?php esc_html_e( 'Number', 'flms' ); ?></label>
+                                <input class="flms-mgr-input" type="number" name="edit_number" id="edit_number">
+                            </div>
+                            <div class="form-group flms-mgr-field">
+                                <label class="flms-mgr-label" for="edit_age"><?php esc_html_e( 'Age', 'flms' ); ?></label>
+                                <input class="flms-mgr-input" type="number" name="edit_age" id="edit_age">
+                            </div>
+                            <div class="form-group flms-mgr-field">
+                                <label class="flms-mgr-label" for="edit_pos"><?php esc_html_e( 'Position', 'flms' ); ?></label>
+                                <select class="flms-mgr-input flms-mgr-input--select" name="edit_pos" id="edit_pos">
+                                    <option value="GK">GK</option>
+                                    <option value="DEF">DEF</option>
+                                    <option value="MID">MID</option>
+                                    <option value="FWD">FWD</option>
+                                </select>
+                            </div>
+                            <div class="form-group flms-mgr-field flms-mgr-field--full">
+                                <label class="flms-mgr-label" for="edit_ic"><?php esc_html_e( 'IC / passport', 'flms' ); ?></label>
+                                <input class="flms-mgr-input" type="text" name="edit_ic" id="edit_ic">
+                            </div>
                         </div>
                         <input type="hidden" name="edit_pid" id="edit_pid">
                         <input type="hidden" name="flms_action" value="update_player">
-                        <?php wp_nonce_field('flms_update_player_nonce'); ?>
-                        <div style="margin-top:15px; text-align:right;"><button type="submit" class="button btn-blue">Save Changes</button></div>
+                        <?php wp_nonce_field( 'flms_update_player_nonce' ); ?>
+                        <div class="flms-mgr-modal__footer">
+                            <button type="submit" class="flms-mgr-btn flms-mgr-btn--primary"><?php esc_html_e( 'Save changes', 'flms' ); ?></button>
+                        </div>
                     </form>
                 </div>
             </div>
 
-            <!-- ACTIONS (ADD/TRANSFER) -->
-            <?php if($stage !== 'locked'): ?>
-                <div class="flms-add-player-box">
-                    <h4>Register New Player</h4>
-                    <form method="post">
-                        <div class="flms-form-grid">
-                            <div class="form-group" style="grid-column: span 2;"><label>Name</label><input type="text" name="p_name" required></div>
-                            <div class="form-group"><label>No.</label><input type="number" name="p_number"></div>
-                            <div class="form-group"><label>Pos</label><select name="p_pos"><option value="GK">GK</option><option value="DEF">DEF</option><option value="MID">MID</option><option value="FWD">FWD</option></select></div>
-                            <div class="form-group"><label>Age</label><input type="number" name="p_age"></div>
-                            <!-- UPDATED LABEL -->
-                            <div class="form-group"><label>IC / Passport (Required)</label><input type="text" name="p_ic" required placeholder="e.g. A1234567 or 901010121234"></div>
+            <?php if ( 'locked' !== $stage ) : ?>
+            <div class="flms-mgr-split">
+                <section class="flms-mgr-card flms-mgr-card--register flms-add-player-box" aria-labelledby="flms-mgr-add-heading">
+                    <h2 id="flms-mgr-add-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Register new player', 'flms' ); ?></h2>
+                    <p class="flms-mgr-card__hint"><?php esc_html_e( 'Add a player to this squad. IC or passport is required.', 'flms' ); ?></p>
+                    <form method="post" class="flms-mgr-stack">
+                        <div class="flms-form-grid flms-mgr-form-grid">
+                            <div class="form-group flms-mgr-field flms-mgr-field--full">
+                                <label class="flms-mgr-label" for="p_name"><?php esc_html_e( 'Name', 'flms' ); ?></label>
+                                <input class="flms-mgr-input" id="p_name" type="text" name="p_name" required>
+                            </div>
+                            <div class="form-group flms-mgr-field">
+                                <label class="flms-mgr-label" for="p_number"><?php esc_html_e( 'No.', 'flms' ); ?></label>
+                                <input class="flms-mgr-input" id="p_number" type="number" name="p_number">
+                            </div>
+                            <div class="form-group flms-mgr-field">
+                                <label class="flms-mgr-label" for="p_pos"><?php esc_html_e( 'Position', 'flms' ); ?></label>
+                                <select class="flms-mgr-input flms-mgr-input--select" name="p_pos" id="p_pos">
+                                    <option value="GK">GK</option>
+                                    <option value="DEF">DEF</option>
+                                    <option value="MID">MID</option>
+                                    <option value="FWD">FWD</option>
+                                </select>
+                            </div>
+                            <div class="form-group flms-mgr-field">
+                                <label class="flms-mgr-label" for="p_age"><?php esc_html_e( 'Age', 'flms' ); ?></label>
+                                <input class="flms-mgr-input" id="p_age" type="number" name="p_age">
+                            </div>
+                            <div class="form-group flms-mgr-field flms-mgr-field--full">
+                                <label class="flms-mgr-label" for="p_ic"><?php esc_html_e( 'IC / passport', 'flms' ); ?></label>
+                                <input class="flms-mgr-input" id="p_ic" type="text" name="p_ic" required placeholder="<?php echo esc_attr__( 'e.g. A1234567', 'flms' ); ?>">
+                            </div>
                         </div>
-                        <input type="hidden" name="flms_action" value="add_player"><input type="hidden" name="team_id" value="<?php echo $active_team_id; ?>"><?php wp_nonce_field('flms_add_player_nonce'); ?>
-                        <button type="submit" class="button button-primary" style="margin-top:15px; width:100%;"><?php echo ($stage==='paid')?'Pay & Add (RM5)':'Add Player'; ?></button>
+                        <input type="hidden" name="flms_action" value="add_player">
+                        <input type="hidden" name="team_id" value="<?php echo (int) $active_team_id; ?>">
+                        <?php wp_nonce_field( 'flms_add_player_nonce' ); ?>
+                        <button type="submit" class="flms-mgr-btn flms-mgr-btn--primary flms-mgr-btn--block">
+                            <?php echo 'paid' === $stage ? esc_html__( 'Pay & add (RM5)', 'flms' ) : esc_html__( 'Add player', 'flms' ); ?>
+                        </button>
                     </form>
-                </div>
-                
-                <div class="flms-transfer-box">
-                    <h4 style="color:#856404; margin-top:0;">Transfer Window (Sign Player)</h4>
-                    <form method="post" id="flms-transfer-form">
-                        <div class="flms-form-grid" style="margin-bottom:10px;">
-                            <!-- UPDATED LABEL -->
-                            <div class="form-group"><label>Player IC / Passport (Required)</label><input type="text" name="player_ic" id="trans_ic" required placeholder="Enter ID to search"></div>
-                            <div class="form-group"><label>Full Name (Optional)</label><input type="text" name="player_name_opt" placeholder="For your reference"></div>
+                </section>
+
+                <section class="flms-mgr-card flms-mgr-card--transfer flms-transfer-box" aria-labelledby="flms-mgr-sign-heading">
+                    <h2 id="flms-mgr-sign-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Sign player (transfer)', 'flms' ); ?></h2>
+                    <p class="flms-mgr-card__hint"><?php esc_html_e( 'Search by IC or passport to request a transfer into this team.', 'flms' ); ?></p>
+                    <form method="post" id="flms-transfer-form" class="flms-mgr-stack">
+                        <div class="flms-form-grid flms-mgr-form-grid">
+                            <div class="form-group flms-mgr-field">
+                                <label class="flms-mgr-label" for="trans_ic"><?php esc_html_e( 'Player IC / passport', 'flms' ); ?></label>
+                                <input class="flms-mgr-input" type="text" name="player_ic" id="trans_ic" required placeholder="<?php echo esc_attr__( 'Enter ID to search', 'flms' ); ?>">
+                            </div>
+                            <div class="form-group flms-mgr-field">
+                                <label class="flms-mgr-label" for="player_name_opt"><?php esc_html_e( 'Full name (optional)', 'flms' ); ?></label>
+                                <input class="flms-mgr-input" id="player_name_opt" type="text" name="player_name_opt" placeholder="<?php echo esc_attr__( 'For your reference', 'flms' ); ?>">
+                            </div>
                         </div>
-                        <input type="hidden" name="my_team_id" value="<?php echo $active_team_id; ?>">
+                        <input type="hidden" name="my_team_id" value="<?php echo (int) $active_team_id; ?>">
                         <input type="hidden" name="flms_transfer_act" value="request">
-                        <?php wp_nonce_field('flms_request_nonce'); ?>
-                        <button type="button" id="btn-check-transfer" class="button transfer-btn" style="width:100%;">Sign Player</button>
+                        <?php wp_nonce_field( 'flms_request_nonce' ); ?>
+                        <button type="button" id="btn-check-transfer" class="flms-mgr-btn flms-mgr-btn--accent flms-mgr-btn--block transfer-btn"><?php esc_html_e( 'Sign player', 'flms' ); ?></button>
                     </form>
-                </div>
+                </section>
+            </div>
             <?php endif; ?>
 
-            <!-- ACCOUNT SETTINGS -->
-            <div class="flms-account-box" style="margin-top:30px; background:#fff; padding:25px; border-radius:8px; border:1px solid #ddd; border-top:3px solid #333;">
-                <h3>Account Settings</h3>
-                <form method="post" style="max-width:400px;">
-                    <p><label style="display:block; font-weight:bold; margin-bottom:5px;">Current Password</label><input type="password" name="old_pass" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"></p>
-                    <p><label style="display:block; font-weight:bold; margin-bottom:5px;">New Password</label><input type="password" name="new_pass" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"></p>
-                    <p><label style="display:block; font-weight:bold; margin-bottom:5px;">Confirm New Password</label><input type="password" name="confirm_pass" required style="width:100%; padding:8px; border:1px solid #ccc; border-radius:4px;"></p>
-                    <input type="hidden" name="flms_action" value="change_password"><?php wp_nonce_field('flms_password_nonce'); ?>
-                    <button type="submit" class="button button-secondary">Change Password</button>
+            <section id="flms-mgr-settings" class="flms-mgr-card flms-mgr-card--account" aria-labelledby="flms-mgr-account-heading">
+                <h2 id="flms-mgr-account-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Account security', 'flms' ); ?></h2>
+                <p class="flms-mgr-card__hint"><?php esc_html_e( 'Update your login password for this manager account.', 'flms' ); ?></p>
+                <form method="post" class="flms-mgr-stack flms-mgr-stack--narrow">
+                    <div class="form-group flms-mgr-field">
+                        <label class="flms-mgr-label" for="old_pass"><?php esc_html_e( 'Current password', 'flms' ); ?></label>
+                        <input class="flms-mgr-input" id="old_pass" type="password" name="old_pass" required autocomplete="current-password">
+                    </div>
+                    <div class="form-group flms-mgr-field">
+                        <label class="flms-mgr-label" for="new_pass"><?php esc_html_e( 'New password', 'flms' ); ?></label>
+                        <input class="flms-mgr-input" id="new_pass" type="password" name="new_pass" required autocomplete="new-password">
+                    </div>
+                    <div class="form-group flms-mgr-field">
+                        <label class="flms-mgr-label" for="confirm_pass"><?php esc_html_e( 'Confirm new password', 'flms' ); ?></label>
+                        <input class="flms-mgr-input" id="confirm_pass" type="password" name="confirm_pass" required autocomplete="new-password">
+                    </div>
+                    <input type="hidden" name="flms_action" value="change_password">
+                    <?php wp_nonce_field( 'flms_password_nonce' ); ?>
+                    <button type="submit" class="flms-mgr-btn flms-mgr-btn--secondary"><?php esc_html_e( 'Change password', 'flms' ); ?></button>
                 </form>
+            </section>
+
+            </div>
+                </div>
             </div>
         </div>
-
-        <style>
-            /* STYLING FOR DASHBOARD */
-            .flms-dashboard-wrapper { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); max-width: 1000px; margin: 0 auto; }
-            .flms-dash-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; margin-bottom: 20px; flex-wrap: wrap; gap: 20px; }
-            .team-dash-logo { width: 60px; height: 60px; border-radius: 50%; border: 2px solid #eee; object-fit: cover; }
-            .team-dash-logo-placeholder { width: 60px; height: 60px; background: #eee; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #999; }
-            .flms-kit-display { display: flex; gap: 10px; align-items:center; }
-            .kit-badge { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: bold; font-size: 10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-            .flms-requests-box, .flms-lineup-box, .flms-finance-box, .flms-add-player-box, .flms-transfer-box { padding: 20px; border-radius: 8px; margin-bottom: 30px; border: 1px solid #eee; }
-            .flms-lineup-box { background: #f0f9ff; border-color: #bbdefb; }
-            .flms-add-player-box { background: #f9f9f9; }
-            .flms-transfer-box { background: #fff3cd; border-color: #ffeeba; }
-            .lineup-list { max-height: 200px; overflow-y: auto; background: #fff; padding: 10px; border: 1px solid #ddd; margin-bottom: 10px; }
-            .flms-form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; }
-            .form-group label { display: block; font-weight: bold; font-size: 11px; margin-bottom: 5px; text-transform:uppercase; color:#555; }
-            .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
-            .btn-tiny { font-size: 10px; padding: 4px 8px; background: #333; color: #fff; text-decoration:none; border-radius:4px; }
-            .btn-green { background: #2ecc71; color: #fff; border:none; padding:4px 8px; border-radius:4px; font-size:11px; }
-            .btn-red { background: #e74c3c; color: #fff; border:none; padding:4px 8px; border-radius:4px; font-size:11px; }
-            .btn-blue { background: #0d47a1; color: #fff; border:none; }
-            .btn-text-red { color: #e74c3c; font-size: 11px; text-decoration: none; border: 1px solid #e74c3c; padding: 2px 6px; border-radius: 3px; margin-left:5px; }
-            .btn-text-blue { color: #0d47a1; font-size: 11px; text-decoration: none; border: 1px solid #0d47a1; padding: 2px 6px; border-radius: 3px; background:none; cursor:pointer; }
-            .transfer-btn { background: #856404 !important; color: #fff !important; border:none !important; }
-            .upload-icon-btn { cursor: pointer; background: #eee; padding: 4px 8px; border-radius: 4px; font-size: 16px; line-height: 1; border: 1px solid #ddd; display:inline-block; }
-            .upload-icon-btn input { display: none; }
-            .col-name { width: auto; } .flms-squad-table th, .flms-squad-table td { padding: 12px 8px; }
-            .flms-modal { position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; }
-            .flms-modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 90%; max-width: 500px; border-radius: 8px; position:relative; }
-            .close-modal { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
-            .flms-history-tabs { display:flex; gap:8px; margin: 0 0 20px 0; flex-wrap:wrap; }
-            .flms-history-tab { display:inline-block; padding:8px 12px; border:1px solid #ddd; border-radius:6px; text-decoration:none; color:#333; font-size:13px; font-weight:600; background:#f8f8f8; }
-            .flms-history-tab.is-active { background:#37003c; color:#fff; border-color:#37003c; }
-            @media (max-width: 768px) { .flms-table-responsive { display: block; overflow-x: auto; width: 100%; border: 1px solid #eee; } .flms-league-table { min-width: 700px; } }
-        </style>
+        <nav class="flms-mgr-bottom-nav" aria-label="<?php esc_attr_e( 'Manager quick navigation', 'flms' ); ?>">
+            <a class="flms-mgr-bottom-nav__link is-active" href="#flms-mgr-dashboard"><?php esc_html_e( 'Dashboard', 'flms' ); ?></a>
+            <a class="flms-mgr-bottom-nav__link" href="#flms-mgr-players"><?php esc_html_e( 'Players', 'flms' ); ?></a>
+            <a class="flms-mgr-bottom-nav__link" href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'Create', 'flms' ); ?></a>
+            <a class="flms-mgr-bottom-nav__link" href="<?php echo esc_url( $inbox_url ); ?>"><?php esc_html_e( 'Inbox', 'flms' ); ?></a>
+            <a class="flms-mgr-bottom-nav__link" href="#flms-mgr-fees"><?php esc_html_e( 'Fees', 'flms' ); ?></a>
+            <a class="flms-mgr-bottom-nav__link" href="#flms-mgr-matches"><?php esc_html_e( 'Matches', 'flms' ); ?></a>
+            <a class="flms-mgr-bottom-nav__link" href="#flms-mgr-settings"><?php esc_html_e( 'Settings', 'flms' ); ?></a>
+        </nav>
 
         <script>
         jQuery(document).ready(function($){
-            $('#btn-check-transfer').click(function(e){ e.preventDefault(); var ic = $('#trans_ic').val(); var btn = $(this); if(!ic) { alert('Please enter the Player IC / Passport.'); return; } btn.text('Checking...').prop('disabled', true); $.post('<?php echo admin_url("admin-ajax.php"); ?>', { action: 'flms_check_player', ic: ic }, function(res) { if(res.success) { var pName = res.data.name; var pTeam = res.data.team; if(typeof Swal !== 'undefined') { Swal.fire({ title: 'Confirm Transfer?', html: "Do you want to sign <strong>" + pName + "</strong>?<br>Current Team: " + pTeam, icon: 'question', showCancelButton: true, confirmButtonColor: '#37003c', confirmButtonText: 'Yes, Sign!', cancelButtonText: 'Cancel' }).then((result) => { if (result.isConfirmed) { $('#flms-transfer-form').submit(); } else { btn.text('Sign Player').prop('disabled', false); } }); } else { if(confirm("Found: " + pName + " (" + pTeam + ")\n\nProceed with transfer?")) { $('#flms-transfer-form').submit(); } else { btn.text('Sign Player').prop('disabled', false); } } } else { if(typeof Swal !== 'undefined') { Swal.fire('Error', res.data, 'error'); } else { alert(res.data); } btn.text('Sign Player').prop('disabled', false); } }); });
-            $('.edit-player-btn').click(function(){ var tr = $(this).closest('tr'); $('#edit_pid').val( tr.data('id') ); $('#edit_name').val( tr.data('name') ); $('#edit_number').val( tr.data('num') ); $('#edit_age').val( tr.data('age') ); $('#edit_ic').val( tr.data('ic') ); $('#edit_pos').val( tr.data('pos') ); $('#flms-edit-modal').fadeIn(); });
-            $('.close-modal').click(function(){ $('#flms-edit-modal').fadeOut(); });
-            $(window).click(function(event) { if ($(event.target).is('#flms-edit-modal')) { $('#flms-edit-modal').fadeOut(); } });
+            var signLbl = <?php echo wp_json_encode( esc_html__( 'Sign player', 'flms' ) ); ?>;
+            var checkLbl = <?php echo wp_json_encode( esc_html__( 'Checking…', 'flms' ) ); ?>;
+            var needIc = <?php echo wp_json_encode( esc_html__( 'Please enter the player IC or passport.', 'flms' ) ); ?>;
+            var foundTpl = <?php echo wp_json_encode( esc_html__( 'Found: %1$s (%2$s)', 'flms' ) ); ?>;
+            var confirmBodyTpl = <?php echo wp_json_encode( esc_html__( 'Do you want to sign %1$s? Current team: %2$s', 'flms' ) ); ?>;
+            var confirmTitle = <?php echo wp_json_encode( esc_html__( 'Confirm transfer?', 'flms' ) ); ?>;
+            var confirmYes = <?php echo wp_json_encode( esc_html__( 'Yes, sign', 'flms' ) ); ?>;
+            var confirmCancel = <?php echo wp_json_encode( esc_html__( 'Cancel', 'flms' ) ); ?>;
+            var proceedFallback = <?php echo wp_json_encode( esc_html__( 'Proceed with transfer?', 'flms' ) ); ?>;
+            var errorTitle = <?php echo wp_json_encode( esc_html__( 'Error', 'flms' ) ); ?>;
+            var ajaxUrl = <?php echo wp_json_encode( esc_url( admin_url( 'admin-ajax.php' ) ) ); ?>;
+
+            $('#btn-check-transfer').on('click', function(e) {
+                e.preventDefault();
+                var ic = $('#trans_ic').val();
+                var btn = $(this);
+                if (!ic) { alert(needIc); return; }
+                btn.text(checkLbl).prop('disabled', true);
+                $.post(ajaxUrl, { action: 'flms_check_player', ic: ic }, function(res) {
+                    if (res.success) {
+                        var pName = res.data.name;
+                        var pTeam = res.data.team;
+                        var foundText = foundTpl.replace('%1$s', pName).replace('%2$s', pTeam);
+                        var confirmBody = confirmBodyTpl.replace('%1$s', '<strong>' + pName + '</strong>').replace('%2$s', pTeam);
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                title: confirmTitle,
+                                html: confirmBody,
+                                icon: 'question',
+                                showCancelButton: true,
+                                confirmButtonColor: '#d4af37',
+                                confirmButtonText: confirmYes,
+                                cancelButtonText: confirmCancel
+                            }).then(function(result) {
+                                if (result.isConfirmed) { $('#flms-transfer-form').submit(); }
+                                else { btn.text(signLbl).prop('disabled', false); }
+                            });
+                        } else {
+                            if (window.confirm(foundText + '\n\n' + proceedFallback)) {
+                                $('#flms-transfer-form').submit();
+                            } else {
+                                btn.text(signLbl).prop('disabled', false);
+                            }
+                        }
+                    } else {
+                        if (typeof Swal !== 'undefined') { Swal.fire(errorTitle, res.data, 'error'); }
+                        else { alert(res.data); }
+                        btn.text(signLbl).prop('disabled', false);
+                    }
+                });
+            });
+
+            $('.edit-player-btn').on('click', function() {
+                var tr = $(this).closest('tr');
+                $('#edit_pid').val(tr.data('id'));
+                $('#edit_name').val(tr.data('name'));
+                $('#edit_number').val(tr.data('num'));
+                $('#edit_age').val(tr.data('age'));
+                $('#edit_ic').val(tr.data('ic'));
+                $('#edit_pos').val(tr.data('pos'));
+                $('#flms-edit-modal').fadeIn();
+            });
+            $('.close-modal').on('click', function() { $('#flms-edit-modal').fadeOut(); });
+            $(window).on('click', function(event) {
+                if ($(event.target).is('#flms-edit-modal')) { $('#flms-edit-modal').fadeOut(); }
+            });
         });
         </script>
         <?php
@@ -487,47 +754,51 @@ class FLMS_Manager_Dashboard {
     private function render_completed_matches_panel( $team_id, $history_tab ) {
         if ( $history_tab === 'league' ) {
             $league_rows = $this->get_completed_league_matches_grouped( $team_id );
-            $html = '<div class="flms-finance-box"><h3>🏆 Completed League Matches (by Competition)</h3>';
+            $html          = '<section class="flms-mgr-card flms-mgr-card--history" aria-labelledby="flms-mgr-history-league-title">';
+            $html         .= '<div class="flms-mgr-card__head"><h2 id="flms-mgr-history-league-title" class="flms-mgr-card__title">' . esc_html__( 'Completed league matches', 'flms' ) . '</h2>';
+            $html         .= '<p class="flms-mgr-card__hint">' . esc_html__( 'Results grouped by competition.', 'flms' ) . '</p></div>';
 
             if ( empty( $league_rows ) ) {
-                return $html . '<p style="margin:0; color:#666;">No completed league matches yet.</p></div>';
+                return $html . '<p class="flms-mgr-empty">' . esc_html__( 'No completed league matches yet.', 'flms' ) . '</p></section>';
             }
 
             foreach ( $league_rows as $competition_name => $rows ) {
-                $html .= '<h4 style="margin:18px 0 8px 0; color:#37003c;">' . esc_html( $competition_name ) . '</h4>';
-                $html .= '<div class="flms-table-responsive"><table class="flms-league-table">';
-                $html .= '<thead><tr><th>Date</th><th>Match</th><th>Score</th></tr></thead><tbody>';
+                $html .= '<h3 class="flms-mgr-subheading">' . esc_html( $competition_name ) . '</h3>';
+                $html .= '<div class="flms-mgr-scroll flms-table-responsive"><table class="flms-league-table flms-mgr-table">';
+                $html .= '<thead><tr><th>' . esc_html__( 'Date', 'flms' ) . '</th><th>' . esc_html__( 'Match', 'flms' ) . '</th><th>' . esc_html__( 'Score', 'flms' ) . '</th></tr></thead><tbody>';
 
                 foreach ( $rows as $r ) {
                     $html .= '<tr>';
-                    $html .= '<td>' . esc_html( $r['date'] ) . '</td>';
-                    $html .= '<td>' . esc_html( $r['match'] ) . '</td>';
-                    $html .= '<td><strong>' . esc_html( $r['score'] ) . '</strong></td>';
+                    $html .= '<td data-label="' . esc_attr__( 'Date', 'flms' ) . '">' . esc_html( $r['date'] ) . '</td>';
+                    $html .= '<td data-label="' . esc_attr__( 'Match', 'flms' ) . '">' . esc_html( $r['match'] ) . '</td>';
+                    $html .= '<td data-label="' . esc_attr__( 'Score', 'flms' ) . '"><strong>' . esc_html( $r['score'] ) . '</strong></td>';
                     $html .= '</tr>';
                 }
                 $html .= '</tbody></table></div>';
             }
 
-            return $html . '</div>';
+            return $html . '</section>';
         }
 
         $friendly_rows = $this->get_completed_friendly_matches( $team_id );
-        $html = '<div class="flms-finance-box"><h3>🤝 Completed Friendly Matches</h3>';
+        $html          = '<section class="flms-mgr-card flms-mgr-card--history" aria-labelledby="flms-mgr-history-friendly-title">';
+        $html         .= '<div class="flms-mgr-card__head"><h2 id="flms-mgr-history-friendly-title" class="flms-mgr-card__title">' . esc_html__( 'Completed friendly matches', 'flms' ) . '</h2>';
+        $html         .= '<p class="flms-mgr-card__hint">' . esc_html__( 'Recent friendlies involving this team.', 'flms' ) . '</p></div>';
 
         if ( empty( $friendly_rows ) ) {
-            return $html . '<p style="margin:0; color:#666;">No completed friendly matches yet.</p></div>';
+            return $html . '<p class="flms-mgr-empty">' . esc_html__( 'No completed friendly matches yet.', 'flms' ) . '</p></section>';
         }
 
-        $html .= '<div class="flms-table-responsive"><table class="flms-league-table">';
-        $html .= '<thead><tr><th>Date</th><th>Match</th><th>Score</th></tr></thead><tbody>';
+        $html .= '<div class="flms-mgr-scroll flms-table-responsive"><table class="flms-league-table flms-mgr-table">';
+        $html .= '<thead><tr><th>' . esc_html__( 'Date', 'flms' ) . '</th><th>' . esc_html__( 'Match', 'flms' ) . '</th><th>' . esc_html__( 'Score', 'flms' ) . '</th></tr></thead><tbody>';
         foreach ( $friendly_rows as $r ) {
             $html .= '<tr>';
-            $html .= '<td>' . esc_html( $r['date'] ) . '</td>';
-            $html .= '<td>' . esc_html( $r['match'] ) . '</td>';
-            $html .= '<td><strong>' . esc_html( $r['score'] ) . '</strong></td>';
+            $html .= '<td data-label="' . esc_attr__( 'Date', 'flms' ) . '">' . esc_html( $r['date'] ) . '</td>';
+            $html .= '<td data-label="' . esc_attr__( 'Match', 'flms' ) . '">' . esc_html( $r['match'] ) . '</td>';
+            $html .= '<td data-label="' . esc_attr__( 'Score', 'flms' ) . '"><strong>' . esc_html( $r['score'] ) . '</strong></td>';
             $html .= '</tr>';
         }
-        $html .= '</tbody></table></div></div>';
+        $html .= '</tbody></table></div></section>';
 
         return $html;
     }
@@ -617,7 +888,33 @@ class FLMS_Manager_Dashboard {
     private function render_create_team_form() {
         ob_start();
         ?>
-        <div class="flms-setup-box" style="max-width:500px; margin:0 auto; background:#fff; padding:30px; border:1px solid #ddd;"><h2>Create Team Profile</h2><form method="post"><p><label>Club Name</label><br><input type="text" name="team_name" required style="width:100%"></p><div style="display:flex; gap:10px;"><p><label>Home Kit</label><br><input type="color" name="home_color" value="#ff0000"></p><p><label>Away Kit</label><br><input type="color" name="away_color" value="#ffffff"></p></div><input type="hidden" name="flms_action" value="create_team"><?php wp_nonce_field('flms_create_team_nonce'); ?><button type="submit" class="button button-primary">Create Team</button></form></div>
+        <div class="flms-dashboard-wrapper flms-mgr-dashboard flms-mgr-dashboard--setup">
+            <div class="flms-mgr-dashboard__inner flms-mgr-dashboard__inner--narrow">
+                <section class="flms-mgr-card flms-mgr-card--setup" aria-labelledby="flms-mgr-setup-title">
+                    <h1 id="flms-mgr-setup-title" class="flms-mgr-card__title"><?php esc_html_e( 'Create your team', 'flms' ); ?></h1>
+                    <p class="flms-mgr-card__hint"><?php esc_html_e( 'Set your club name and kit colours to access the manager dashboard.', 'flms' ); ?></p>
+                    <form method="post" class="flms-mgr-stack">
+                        <div class="form-group flms-mgr-field">
+                            <label class="flms-mgr-label" for="flms-setup-team-name"><?php esc_html_e( 'Club name', 'flms' ); ?></label>
+                            <input class="flms-mgr-input" id="flms-setup-team-name" type="text" name="team_name" required autocomplete="organization">
+                        </div>
+                        <div class="flms-mgr-kit-pickers">
+                            <div class="form-group flms-mgr-field">
+                                <label class="flms-mgr-label" for="flms-setup-home"><?php esc_html_e( 'Home kit', 'flms' ); ?></label>
+                                <input class="flms-mgr-input flms-mgr-input--color" id="flms-setup-home" type="color" name="home_color" value="#ff0000">
+                            </div>
+                            <div class="form-group flms-mgr-field">
+                                <label class="flms-mgr-label" for="flms-setup-away"><?php esc_html_e( 'Away kit', 'flms' ); ?></label>
+                                <input class="flms-mgr-input flms-mgr-input--color" id="flms-setup-away" type="color" name="away_color" value="#ffffff">
+                            </div>
+                        </div>
+                        <input type="hidden" name="flms_action" value="create_team">
+                        <?php wp_nonce_field( 'flms_create_team_nonce' ); ?>
+                        <button type="submit" class="flms-mgr-btn flms-mgr-btn--primary flms-mgr-btn--block"><?php esc_html_e( 'Create team', 'flms' ); ?></button>
+                    </form>
+                </section>
+            </div>
+        </div>
         <?php
         return ob_get_clean();
     }
@@ -628,28 +925,90 @@ class FLMS_Manager_Dashboard {
         // 1. Pay Fee (MATCH)
         if ( isset($_POST['flms_action']) && $_POST['flms_action'] === 'pay_match_fee' ) {
             check_admin_referer('flms_pay_fee_nonce');
-            $fee_product_id = 19182; WC()->cart->empty_cart(); WC()->cart->add_to_cart( $fee_product_id, 1, 0, [], ['match_fee_id' => intval($_POST['match_id']), 'match_fee_team' => intval($_POST['team_id'])]); wp_redirect( wc_get_checkout_url() ); exit;
+            $mid = (int) $_POST['match_id'];
+            $tid = (int) $_POST['team_id'];
+            $uid = get_current_user_id();
+            if ( ! $this->user_owns_team( $uid, $tid ) ) {
+                wp_die( esc_html__( 'You are not allowed to pay fees for this team.', 'flms' ), '', [ 'response' => 403 ] );
+            }
+            $home = (int) get_post_meta( $mid, 'flms_home_team', true );
+            $away = (int) get_post_meta( $mid, 'flms_away_team', true );
+            if ( $tid !== $home && $tid !== $away ) {
+                wp_die( esc_html__( 'This team is not part of this match.', 'flms' ), '', [ 'response' => 403 ] );
+            }
+            $fee_product_id = 19182;
+            WC()->cart->empty_cart();
+            WC()->cart->add_to_cart( $fee_product_id, 1, 0, [], [ 'match_fee_id' => $mid, 'match_fee_team' => $tid ] );
+            wp_redirect( wc_get_checkout_url() );
+            exit;
         }
-        
+
         // 2. Pay Fee (TRANSFER)
         if ( isset($_POST['flms_action']) && $_POST['flms_action'] === 'pay_transfer_fee' ) {
             check_admin_referer('flms_pay_transfer_nonce');
-            $fee_product_id = 16022; $pid = intval($_POST['player_id']); $tid = intval($_POST['target_team']); WC()->cart->empty_cart(); WC()->cart->add_to_cart( $fee_product_id, 1, 0, [], ['transfer_pid' => $pid, 'transfer_target_team' => $tid]); wp_redirect( wc_get_checkout_url() ); exit;
+            $pid = (int) $_POST['player_id'];
+            $tid = (int) $_POST['target_team'];
+            $req_id = isset( $_POST['transfer_id'] ) ? (int) $_POST['transfer_id'] : 0;
+            $uid = get_current_user_id();
+            if ( ! $this->user_owns_team( $uid, $tid ) ) {
+                wp_die( esc_html__( 'You are not allowed to pay for this transfer target team.', 'flms' ), '', [ 'response' => 403 ] );
+            }
+            $transfer = $req_id ? get_post( $req_id ) : null;
+            if ( ! $transfer || $transfer->post_type !== 'flms_transfer' ) {
+                wp_die( esc_html__( 'Invalid transfer request.', 'flms' ), '', [ 'response' => 403 ] );
+            }
+            $meta_to = (int) get_post_meta( $req_id, '_to_team', true );
+            $meta_player = (int) get_post_meta( $req_id, '_player_id', true );
+            if ( $meta_to !== $tid || $meta_player !== $pid ) {
+                wp_die( esc_html__( 'Transfer details do not match this payment.', 'flms' ), '', [ 'response' => 403 ] );
+            }
+            $fee_product_id = 16022;
+            WC()->cart->empty_cart();
+            WC()->cart->add_to_cart( $fee_product_id, 1, 0, [], [ 'transfer_pid' => $pid, 'transfer_target_team' => $tid, 'transfer_request_id' => $req_id ] );
+            wp_redirect( wc_get_checkout_url() );
+            exit;
         }
 
         // 3. Save Lineup
         if ( isset($_POST['flms_action']) && $_POST['flms_action'] === 'save_lineup' ) {
             check_admin_referer('flms_lineup_nonce');
-            $mid = intval($_POST['match_id']); $is_home = ($_POST['is_home'] === '1'); $lineup = isset($_POST['match_lineup']) ? array_map('intval', $_POST['match_lineup']) : [];
+            $mid = (int) $_POST['match_id'];
+            $is_home = ( $_POST['is_home'] === '1' );
+            $lineup = isset( $_POST['match_lineup'] ) ? array_map( 'intval', (array) $_POST['match_lineup'] ) : [];
+            $home_id = (int) get_post_meta( $mid, 'flms_home_team', true );
+            $away_id = (int) get_post_meta( $mid, 'flms_away_team', true );
+            $side_team_id = $is_home ? $home_id : $away_id;
+            $uid = get_current_user_id();
+            if ( ! $side_team_id || ! $this->user_owns_team( $uid, $side_team_id ) ) {
+                wp_die( esc_html__( 'You cannot edit lineup for this side of the match.', 'flms' ), '', [ 'response' => 403 ] );
+            }
+            foreach ( $lineup as $player_id ) {
+                if ( ! $player_id ) {
+                    continue;
+                }
+                $p_team = (int) get_post_meta( $player_id, 'flms_team_id', true );
+                if ( $p_team !== $side_team_id ) {
+                    wp_die( esc_html__( 'Lineup may only include players from your team.', 'flms' ), '', [ 'response' => 403 ] );
+                }
+            }
             $meta_key = $is_home ? '_flms_lineup_home' : '_flms_lineup_away';
-            update_post_meta($mid, $meta_key, $lineup);
-            if ( class_exists('FLMS_Player_Stats') ) { $eng = new FLMS_Player_Stats(); foreach($lineup as $pid) $eng->recalculate_single_player($pid); }
-            wp_redirect( add_query_arg('msg', 'lineup_saved', remove_query_arg('flms_action')) ); exit;
+            update_post_meta( $mid, $meta_key, $lineup );
+            if ( class_exists( 'FLMS_Player_Stats' ) ) {
+                $eng = new FLMS_Player_Stats();
+                foreach ( $lineup as $pl_id ) {
+                    $eng->recalculate_single_player( $pl_id );
+                }
+            }
+            wp_redirect( add_query_arg( 'msg', 'lineup_saved', remove_query_arg( 'flms_action' ) ) );
+            exit;
         }
         // 4. Update Logo
         if ( isset($_POST['flms_action']) && $_POST['flms_action'] === 'update_logo' ) {
             check_admin_referer('flms_logo_nonce');
             $tid = intval($_POST['team_id']);
+            if ( ! $this->user_owns_team( get_current_user_id(), $tid ) ) {
+                wp_die( esc_html__( 'You cannot update this team logo.', 'flms' ), '', [ 'response' => 403 ] );
+            }
             if ( ! empty( $_FILES['team_logo']['name'] ) ) {
                 require_once( ABSPATH . 'wp-admin/includes/image.php' ); require_once( ABSPATH . 'wp-admin/includes/file.php' ); require_once( ABSPATH . 'wp-admin/includes/media.php' );
                 $aid = media_handle_upload( 'team_logo', $tid );
@@ -839,5 +1198,21 @@ class FLMS_Manager_Dashboard {
             wp_redirect( home_url('/login/?msg=password_changed') );
             exit;
         }
+    }
+
+    /**
+     * Whether the user is the post author (owner) of a flms_team.
+     */
+    private function user_owns_team( $user_id, $team_id ) {
+        $user_id = (int) $user_id;
+        $team_id = (int) $team_id;
+        if ( ! $user_id || ! $team_id ) {
+            return false;
+        }
+        $team = get_post( $team_id );
+        if ( ! $team || $team->post_type !== 'flms_team' ) {
+            return false;
+        }
+        return (int) $team->post_author === $user_id;
     }
 }

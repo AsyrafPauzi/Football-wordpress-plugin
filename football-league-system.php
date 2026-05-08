@@ -14,10 +14,11 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Define Constants
 define( 'FLMS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'FLMS_URL', plugin_dir_url( __FILE__ ) );
-define( 'FLMS_VERSION', '5.5.0' );
+define( 'FLMS_VERSION', '5.5.5' );
 define( 'FLMS_FRIENDLY_FEE_PRODUCT_ID', 23058 );
 
 // Include Classes
+require_once FLMS_PATH . 'includes/class-flms-cache-bump.php';
 require_once FLMS_PATH . 'includes/class-flms-activator.php';
 require_once FLMS_PATH . 'includes/class-flms-cpt.php';
 require_once FLMS_PATH . 'includes/class-flms-woo.php';
@@ -81,6 +82,7 @@ register_deactivation_hook( __FILE__, [ 'FLMS_Activator', 'deactivate' ] );
 
 // Initialize System
 function flms_init_system() {
+    FLMS_Cache_Bump::init();
     new FLMS_CPT();
     new FLMS_Woo();
     new FLMS_Match_Engine();
