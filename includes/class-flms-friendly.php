@@ -594,61 +594,90 @@ class FLMS_Friendly {
 
         $msg = isset( $_GET['flms_friendly_msg'] ) ? sanitize_text_field( $_GET['flms_friendly_msg'] ) : '';
         $success = ( $msg === 'created' );
+        $manager_url       = apply_filters( 'flms_manager_dashboard_url', home_url( '/my-team-dashboard/' ) );
+        $inbox_url         = self::get_friendly_inbox_url();
+        $create_url        = get_permalink();
+        $dashboard_url     = esc_url( add_query_arg( 'mgr_view', 'dashboard', $manager_url ) );
+        $players_url       = esc_url( add_query_arg( 'mgr_view', 'players', $manager_url ) );
+        $settings_url      = esc_url( add_query_arg( 'mgr_view', 'settings', $manager_url ) );
+        $match_fees_url    = esc_url( add_query_arg( 'mgr_view', 'dashboard', $manager_url ) . '#flms-mgr-fees' );
+        $friendly_view_url = esc_url( add_query_arg( 'mgr_view', 'friendly', $manager_url ) );
+        $league_view_url   = esc_url( add_query_arg( 'mgr_view', 'league', $manager_url ) );
 
         ob_start();
         ?>
-        <div class="flms-dashboard-wrapper flms-friendly-create dark-mode">
-            <h2 class="flms-section-title">Create Friendly Match Request</h2>
-            <p class="flms-desc">Enter the date, time and place. Other team managers will see this in their inbox and can request to play against you.</p>
-            <?php if ( $success ) : ?>
-                <div class="flms-notice flms-notice-success">Your friendly match request has been submitted. Other managers can now request to play.</div>
-            <?php endif; ?>
-            <div class="flms-roster-section">
-                <form method="post" class="flms-friendly-form">
-                    <input type="hidden" name="flms_action" value="friendly_create">
-                    <?php wp_nonce_field( 'flms_friendly_create' ); ?>
-                    <div class="flms-form-grid">
-                        <div class="form-group">
-                            <label>Your Team</label>
-                            <select name="host_team_id" required>
-                                <?php foreach ( $team_ids as $tid ) : $t = get_post( $tid ); if ( ! $t ) continue; ?>
-                                    <option value="<?php echo (int) $tid; ?>"><?php echo esc_html( $t->post_title ); ?></option>
-                                <?php endforeach; ?>
-                            </select>
+        <div class="flms-dashboard-wrapper flms-mgr-dashboard flms-friendly-create dark-mode">
+            <div class="flms-mgr-shell">
+                <aside class="flms-mgr-shell__sidebar">
+                    <h2 class="flms-mgr-sidebar__title"><?php esc_html_e( 'Manager Menu', 'flms' ); ?></h2>
+                    <nav class="flms-mgr-sidebar__nav" aria-label="<?php esc_attr_e( 'Manager navigation', 'flms' ); ?>">
+                        <a class="flms-mgr-sidebar__link" href="<?php echo $dashboard_url; ?>"><?php esc_html_e( 'Dashboard', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="<?php echo $players_url; ?>"><?php esc_html_e( 'Players', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link is-active" href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'Create Friendly Match', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="<?php echo esc_url( $inbox_url ); ?>"><?php esc_html_e( 'Inbox', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="<?php echo $settings_url; ?>"><?php esc_html_e( 'Team Settings', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="<?php echo $match_fees_url; ?>"><?php esc_html_e( 'Match Fees', 'flms' ); ?></a>
+                        <div class="flms-mgr-sidebar__group">
+                            <span class="flms-mgr-sidebar__group-label"><?php esc_html_e( 'Matches', 'flms' ); ?></span>
+                            <a class="flms-mgr-sidebar__sublink" href="<?php echo $friendly_view_url; ?>"><?php esc_html_e( 'Friendly', 'flms' ); ?></a>
+                            <a class="flms-mgr-sidebar__sublink" href="<?php echo $league_view_url; ?>"><?php esc_html_e( 'League', 'flms' ); ?></a>
                         </div>
-                        <div class="form-group">
-                            <label>Date</label>
-                            <input type="date" name="friendly_date" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Time</label>
-                            <input type="time" name="friendly_time" required>
-                        </div>
-                        <div class="form-group" style="grid-column: 1 / -1;">
-                            <label>Place / Venue</label>
-                            <?php
-                            $venue_terms = get_terms( [ 'taxonomy' => 'flms_venue', 'hide_empty' => false ] );
-                            if ( ! empty( $venue_terms ) && ! is_wp_error( $venue_terms ) ) : ?>
-                                <select name="friendly_place" required>
-                                    <option value="">Select venue</option>
-                                    <?php foreach ( $venue_terms as $v ) : ?>
-                                        <option value="<?php echo esc_attr( $v->name ); ?>"><?php echo esc_html( $v->name ); ?></option>
-                                    <?php endforeach; ?>
-                                </select>
-                            <?php else : ?>
-                                <input type="text" name="friendly_place" required placeholder="e.g. Main Stadium, City">
-                            <?php endif; ?>
-                        </div>
-                        <div class="form-group flms-kit-color-field" style="grid-column: 1 / -1;">
-                            <label for="flms_host_jersey_color"><?php esc_html_e( 'Your team jersey colour', 'flms' ); ?></label>
-                            <input type="color" name="host_jersey_color" id="flms_host_jersey_color" value="#ffffff" class="flms-kit-color-input" aria-label="<?php esc_attr_e( 'Your team jersey colour', 'flms' ); ?>">
-                            <span class="flms-field-hint"><?php esc_html_e( 'Pick a colour (default is white). Shown to opponents in open requests.', 'flms' ); ?></span>
-                        </div>
-                    </div>
-                    <p style="margin-top:15px;">
-                        <button type="submit" class="button button-primary btn-gold">Submit Request</button>
-                    </p>
-                </form>
+                    </nav>
+                </aside>
+                <div class="flms-mgr-shell__main">
+                    <section class="flms-mgr-card">
+                        <h2 class="flms-mgr-card__title"><?php esc_html_e( 'Create Friendly Match Request', 'flms' ); ?></h2>
+                        <p class="flms-mgr-card__hint"><?php esc_html_e( 'Enter the date, time and place. Other team managers will see this in inbox and can request to play against you.', 'flms' ); ?></p>
+                        <?php if ( $success ) : ?>
+                            <div class="flms-notice flms-notice-success">Your friendly match request has been submitted. Other managers can now request to play.</div>
+                        <?php endif; ?>
+                        <form method="post" class="flms-friendly-form">
+                            <input type="hidden" name="flms_action" value="friendly_create">
+                            <?php wp_nonce_field( 'flms_friendly_create' ); ?>
+                            <div class="flms-form-grid">
+                                <div class="form-group">
+                                    <label>Your Team</label>
+                                    <select name="host_team_id" required>
+                                        <?php foreach ( $team_ids as $tid ) : $t = get_post( $tid ); if ( ! $t ) continue; ?>
+                                            <option value="<?php echo (int) $tid; ?>"><?php echo esc_html( $t->post_title ); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Date</label>
+                                    <input type="date" name="friendly_date" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Time</label>
+                                    <input type="time" name="friendly_time" required>
+                                </div>
+                                <div class="form-group" style="grid-column: 1 / -1;">
+                                    <label>Place / Venue</label>
+                                    <?php
+                                    $venue_terms = get_terms( [ 'taxonomy' => 'flms_venue', 'hide_empty' => false ] );
+                                    if ( ! empty( $venue_terms ) && ! is_wp_error( $venue_terms ) ) : ?>
+                                        <select name="friendly_place" required>
+                                            <option value="">Select venue</option>
+                                            <?php foreach ( $venue_terms as $v ) : ?>
+                                                <option value="<?php echo esc_attr( $v->name ); ?>"><?php echo esc_html( $v->name ); ?></option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    <?php else : ?>
+                                        <input type="text" name="friendly_place" required placeholder="e.g. Main Stadium, City">
+                                    <?php endif; ?>
+                                </div>
+                                <div class="form-group flms-kit-color-field" style="grid-column: 1 / -1;">
+                                    <label for="flms_host_jersey_color"><?php esc_html_e( 'Your team jersey colour', 'flms' ); ?></label>
+                                    <input type="color" name="host_jersey_color" id="flms_host_jersey_color" value="#ffffff" class="flms-kit-color-input" aria-label="<?php esc_attr_e( 'Your team jersey colour', 'flms' ); ?>">
+                                    <span class="flms-field-hint"><?php esc_html_e( 'Pick a colour (default is white). Shown to opponents in open requests.', 'flms' ); ?></span>
+                                </div>
+                            </div>
+                            <p style="margin-top:15px;">
+                                <button type="submit" class="button button-primary btn-gold">Submit Request</button>
+                            </p>
+                        </form>
+                    </section>
+                </div>
             </div>
         </div>
         <?php
@@ -681,11 +710,39 @@ class FLMS_Friendly {
         $now_ts = current_time( 'timestamp' );
         $announcement_count = count( $this->get_active_inbox_announcements( $now_ts ) );
         $friendly_notifications_count += (int) $announcement_count;
+        $manager_url       = apply_filters( 'flms_manager_dashboard_url', home_url( '/my-team-dashboard/' ) );
+        $inbox_url         = self::get_friendly_inbox_url();
+        $create_url        = apply_filters( 'flms_friendly_create_url', home_url( '/create-friendly/' ) );
+        $dashboard_url     = esc_url( add_query_arg( 'mgr_view', 'dashboard', $manager_url ) );
+        $players_url       = esc_url( add_query_arg( 'mgr_view', 'players', $manager_url ) );
+        $settings_url      = esc_url( add_query_arg( 'mgr_view', 'settings', $manager_url ) );
+        $match_fees_url    = esc_url( add_query_arg( 'mgr_view', 'dashboard', $manager_url ) . '#flms-mgr-fees' );
+        $friendly_view_url = esc_url( add_query_arg( 'mgr_view', 'friendly', $manager_url ) );
+        $league_view_url   = esc_url( add_query_arg( 'mgr_view', 'league', $manager_url ) );
 
         ob_start();
         ?>
-        <div class="flms-dashboard-wrapper flms-friendly-inbox dark-mode">
-            <h2 class="flms-section-title">Friendly Match Inbox</h2>
+        <div class="flms-dashboard-wrapper flms-mgr-dashboard flms-friendly-inbox dark-mode">
+            <div class="flms-mgr-shell">
+                <aside class="flms-mgr-shell__sidebar">
+                    <h2 class="flms-mgr-sidebar__title"><?php esc_html_e( 'Manager Menu', 'flms' ); ?></h2>
+                    <nav class="flms-mgr-sidebar__nav" aria-label="<?php esc_attr_e( 'Manager navigation', 'flms' ); ?>">
+                        <a class="flms-mgr-sidebar__link" href="<?php echo $dashboard_url; ?>"><?php esc_html_e( 'Dashboard', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="<?php echo $players_url; ?>"><?php esc_html_e( 'Players', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'Create Friendly Match', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link is-active" href="<?php echo esc_url( $inbox_url ); ?>"><?php esc_html_e( 'Inbox', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="<?php echo $settings_url; ?>"><?php esc_html_e( 'Team Settings', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link" href="<?php echo $match_fees_url; ?>"><?php esc_html_e( 'Match Fees', 'flms' ); ?></a>
+                        <div class="flms-mgr-sidebar__group">
+                            <span class="flms-mgr-sidebar__group-label"><?php esc_html_e( 'Matches', 'flms' ); ?></span>
+                            <a class="flms-mgr-sidebar__sublink" href="<?php echo $friendly_view_url; ?>"><?php esc_html_e( 'Friendly', 'flms' ); ?></a>
+                            <a class="flms-mgr-sidebar__sublink" href="<?php echo $league_view_url; ?>"><?php esc_html_e( 'League', 'flms' ); ?></a>
+                        </div>
+                    </nav>
+                </aside>
+                <div class="flms-mgr-shell__main">
+                    <section class="flms-mgr-card">
+            <h2 class="flms-mgr-card__title">Friendly Match Inbox</h2>
             <div class="flms-tabs-filter-bar">
                 <a href="<?php echo esc_url( add_query_arg( 'inbox_tab', 'open' ) ); ?>" class="tab-filter-btn <?php echo $tab === 'open' ? 'active' : ''; ?>">
                     Open Requests
@@ -738,6 +795,9 @@ class FLMS_Friendly {
             <?php else : ?>
                 <?php echo $this->render_notifications( $user_id, $team_ids ); ?>
             <?php endif; ?>
+                    </section>
+                </div>
+            </div>
         </div>
         <?php
         return ob_get_clean();

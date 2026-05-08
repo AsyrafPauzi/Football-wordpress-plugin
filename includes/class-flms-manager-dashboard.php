@@ -142,6 +142,20 @@ class FLMS_Manager_Dashboard {
 
         $announcement_count = (int) count( (array) $announcement_ids );
         $total_inbox_badge = (int) $open_requests_count + (int) $announcement_count;
+        $allowed_views = [ 'dashboard', 'players', 'settings', 'friendly', 'league' ];
+        $active_view   = isset( $_GET['mgr_view'] ) ? sanitize_key( wp_unslash( $_GET['mgr_view'] ) ) : 'dashboard';
+        if ( ! in_array( $active_view, $allowed_views, true ) ) {
+            $active_view = 'dashboard';
+        }
+        if ( in_array( $active_view, [ 'friendly', 'league' ], true ) ) {
+            $history_tab = $active_view;
+        }
+        $base_manager_url = remove_query_arg( [ 'paged', 'history_tab', 'mgr_view' ] );
+        $dashboard_url    = esc_url( add_query_arg( [ 'manage_team' => $active_team_id, 'mgr_view' => 'dashboard' ], $base_manager_url ) );
+        $players_url      = esc_url( add_query_arg( [ 'manage_team' => $active_team_id, 'mgr_view' => 'players' ], $base_manager_url ) );
+        $settings_url     = esc_url( add_query_arg( [ 'manage_team' => $active_team_id, 'mgr_view' => 'settings' ], $base_manager_url ) );
+        $friendly_view_url = esc_url( add_query_arg( [ 'manage_team' => $active_team_id, 'mgr_view' => 'friendly' ], $base_manager_url ) );
+        $league_view_url   = esc_url( add_query_arg( [ 'manage_team' => $active_team_id, 'mgr_view' => 'league' ], $base_manager_url ) );
         $my_pending_transfers = get_posts(
             [
                 'post_type'      => 'flms_transfer',
@@ -186,16 +200,16 @@ class FLMS_Manager_Dashboard {
                 <aside class="flms-mgr-shell__sidebar">
                     <h2 class="flms-mgr-sidebar__title"><?php esc_html_e( 'Manager Menu', 'flms' ); ?></h2>
                     <nav class="flms-mgr-sidebar__nav" aria-label="<?php esc_attr_e( 'Manager navigation', 'flms' ); ?>">
-                        <a class="flms-mgr-sidebar__link is-active" href="#flms-mgr-dashboard"><?php esc_html_e( 'Dashboard', 'flms' ); ?></a>
-                        <a class="flms-mgr-sidebar__link" href="#flms-mgr-players"><?php esc_html_e( 'Players', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link <?php echo 'dashboard' === $active_view ? 'is-active' : ''; ?>" href="<?php echo $dashboard_url; ?>"><?php esc_html_e( 'Dashboard', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link <?php echo 'players' === $active_view ? 'is-active' : ''; ?>" href="<?php echo $players_url; ?>"><?php esc_html_e( 'Players', 'flms' ); ?></a>
                         <a class="flms-mgr-sidebar__link" href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'Create Friendly Match', 'flms' ); ?></a>
                         <a class="flms-mgr-sidebar__link" href="<?php echo esc_url( $inbox_url ); ?>"><?php esc_html_e( 'Inbox', 'flms' ); ?> <span class="flms-mgr-badge"><?php echo (int) $total_inbox_badge; ?></span></a>
-                        <a class="flms-mgr-sidebar__link" href="#flms-mgr-settings"><?php esc_html_e( 'Team Settings', 'flms' ); ?></a>
-                        <a class="flms-mgr-sidebar__link" href="#flms-mgr-fees"><?php esc_html_e( 'Match Fees', 'flms' ); ?> <span class="flms-mgr-badge"><?php echo (int) $unpaid_match_fee_count; ?></span></a>
+                        <a class="flms-mgr-sidebar__link <?php echo 'settings' === $active_view ? 'is-active' : ''; ?>" href="<?php echo $settings_url; ?>"><?php esc_html_e( 'Team Settings', 'flms' ); ?></a>
+                        <a class="flms-mgr-sidebar__link <?php echo 'dashboard' === $active_view ? 'is-active' : ''; ?>" href="<?php echo $dashboard_url; ?>#flms-mgr-fees"><?php esc_html_e( 'Match Fees', 'flms' ); ?> <span class="flms-mgr-badge"><?php echo (int) $unpaid_match_fee_count; ?></span></a>
                         <div class="flms-mgr-sidebar__group">
                             <span class="flms-mgr-sidebar__group-label"><?php esc_html_e( 'Matches', 'flms' ); ?></span>
-                            <a class="flms-mgr-sidebar__sublink" href="<?php echo esc_url( add_query_arg( [ 'manage_team' => $active_team_id, 'history_tab' => 'friendly' ], remove_query_arg( [ 'paged' ] ) ) ); ?>"><?php esc_html_e( 'Friendly', 'flms' ); ?></a>
-                            <a class="flms-mgr-sidebar__sublink" href="<?php echo esc_url( add_query_arg( [ 'manage_team' => $active_team_id, 'history_tab' => 'league' ], remove_query_arg( [ 'paged' ] ) ) ); ?>"><?php esc_html_e( 'League', 'flms' ); ?></a>
+                            <a class="flms-mgr-sidebar__sublink <?php echo 'friendly' === $active_view ? 'is-active' : ''; ?>" href="<?php echo $friendly_view_url; ?>"><?php esc_html_e( 'Friendly', 'flms' ); ?></a>
+                            <a class="flms-mgr-sidebar__sublink <?php echo 'league' === $active_view ? 'is-active' : ''; ?>" href="<?php echo $league_view_url; ?>"><?php esc_html_e( 'League', 'flms' ); ?></a>
                         </div>
                     </nav>
                 </aside>
@@ -218,6 +232,7 @@ class FLMS_Manager_Dashboard {
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    <input type="hidden" name="mgr_view" value="<?php echo esc_attr( $active_view ); ?>">
                 </form>
             </section>
             <?php endif; ?>
@@ -239,6 +254,7 @@ class FLMS_Manager_Dashboard {
                         </div>
                     </div>
                 </div>
+                <?php if ( 'settings' === $active_view ) : ?>
                 <form method="post" enctype="multipart/form-data" class="flms-mgr-hero__actions">
                     <label class="flms-mgr-btn flms-mgr-btn--secondary">
                         <span class="flms-mgr-btn__label"><?php esc_html_e( 'Update logo', 'flms' ); ?></span>
@@ -248,8 +264,10 @@ class FLMS_Manager_Dashboard {
                     <input type="hidden" name="team_id" value="<?php echo (int) $active_team_id; ?>">
                     <?php wp_nonce_field( 'flms_logo_nonce' ); ?>
                 </form>
+                <?php endif; ?>
             </header>
 
+            <?php if ( 'dashboard' === $active_view ) : ?>
             <section class="flms-mgr-kpi-row" aria-label="<?php esc_attr_e( 'Dashboard quick stats', 'flms' ); ?>">
                 <article class="flms-mgr-kpi">
                     <p class="flms-mgr-kpi__label"><?php esc_html_e( 'Unpaid match fees', 'flms' ); ?></p>
@@ -274,25 +292,15 @@ class FLMS_Manager_Dashboard {
                     </div>
                 </article>
             </section>
+            <?php endif; ?>
 
-            <div id="flms-mgr-matches" class="flms-mgr-segmented" role="tablist" aria-label="<?php esc_attr_e( 'Match history', 'flms' ); ?>">
-                <?php
-                $friendly_tab_url = esc_url( add_query_arg(
-                    [ 'manage_team' => $active_team_id, 'history_tab' => 'friendly' ],
-                    remove_query_arg( [ 'paged' ] )
-                ) );
-                $league_tab_url = esc_url( add_query_arg(
-                    [ 'manage_team' => $active_team_id, 'history_tab' => 'league' ],
-                    remove_query_arg( [ 'paged' ] )
-                ) );
-                ?>
-                <a class="flms-history-tab flms-mgr-tab <?php echo $history_tab === 'friendly' ? 'is-active' : ''; ?>" href="<?php echo $friendly_tab_url; ?>"><?php esc_html_e( 'Friendly matches', 'flms' ); ?></a>
-                <a class="flms-history-tab flms-mgr-tab <?php echo $history_tab === 'league' ? 'is-active' : ''; ?>" href="<?php echo $league_tab_url; ?>"><?php esc_html_e( 'League matches', 'flms' ); ?></a>
-            </div>
+            <?php if ( 'dashboard' === $active_view ) : ?>
+                <?php echo $this->render_history_preview_panels( $active_team_id, $friendly_view_url, $league_view_url ); ?>
+            <?php elseif ( in_array( $active_view, [ 'friendly', 'league' ], true ) ) : ?>
+            <?php echo $this->render_completed_matches_panel( $active_team_id, $active_view ); ?>
+            <?php endif; ?>
 
-            <?php echo $this->render_completed_matches_panel( $active_team_id, $history_tab ); ?>
-
-            <?php if ( ! empty( $incoming_requests ) ) : ?>
+            <?php if ( 'dashboard' === $active_view && ! empty( $incoming_requests ) ) : ?>
             <section id="flms-mgr-requests" class="flms-mgr-card flms-mgr-card--alert" aria-labelledby="flms-mgr-incoming-heading">
                 <div class="flms-mgr-card__head">
                     <h2 id="flms-mgr-incoming-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Incoming transfer requests', 'flms' ); ?></h2>
@@ -328,7 +336,7 @@ class FLMS_Manager_Dashboard {
             <?php endif; ?>
 
             <?php
-            if ( ! empty( $my_pending_transfers ) ) :
+            if ( 'dashboard' === $active_view && ! empty( $my_pending_transfers ) ) :
                 ?>
             <section id="flms-mgr-transfer-payments" class="flms-mgr-card flms-mgr-card--warning" aria-labelledby="flms-mgr-pending-transfer-heading">
                 <div class="flms-mgr-card__head">
@@ -364,7 +372,7 @@ class FLMS_Manager_Dashboard {
             </section>
             <?php endif; ?>
 
-            <?php if ( ! empty( $next_match ) ) :
+            <?php if ( 'dashboard' === $active_view && ! empty( $next_match ) ) :
                 $mid           = $next_match[0]->ID;
                 $hid           = get_post_meta( $mid, 'flms_home_team', true );
                 $aid           = get_post_meta( $mid, 'flms_away_team', true );
@@ -411,6 +419,7 @@ class FLMS_Manager_Dashboard {
             </section>
             <?php endif; ?>
 
+            <?php if ( 'dashboard' === $active_view ) : ?>
             <section id="flms-mgr-fees" class="flms-mgr-card" aria-labelledby="flms-mgr-fees-heading">
                 <div class="flms-mgr-card__head">
                     <h2 id="flms-mgr-fees-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Match fees', 'flms' ); ?></h2>
@@ -467,7 +476,9 @@ class FLMS_Manager_Dashboard {
                     </table>
                 </div>
             </section>
+            <?php endif; ?>
 
+            <?php if ( 'players' === $active_view ) : ?>
             <section id="flms-mgr-players" class="flms-mgr-card" aria-labelledby="flms-mgr-squad-heading">
                 <div class="flms-mgr-card__head">
                     <h2 id="flms-mgr-squad-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Full squad', 'flms' ); ?></h2>
@@ -640,7 +651,9 @@ class FLMS_Manager_Dashboard {
                 </section>
             </div>
             <?php endif; ?>
+            <?php endif; ?>
 
+            <?php if ( 'settings' === $active_view ) : ?>
             <section id="flms-mgr-settings" class="flms-mgr-card flms-mgr-card--account" aria-labelledby="flms-mgr-account-heading">
                 <h2 id="flms-mgr-account-heading" class="flms-mgr-card__title"><?php esc_html_e( 'Account security', 'flms' ); ?></h2>
                 <p class="flms-mgr-card__hint"><?php esc_html_e( 'Update your login password for this manager account.', 'flms' ); ?></p>
@@ -662,21 +675,12 @@ class FLMS_Manager_Dashboard {
                     <button type="submit" class="flms-mgr-btn flms-mgr-btn--secondary"><?php esc_html_e( 'Change password', 'flms' ); ?></button>
                 </form>
             </section>
+            <?php endif; ?>
 
             </div>
                 </div>
             </div>
         </div>
-        <nav class="flms-mgr-bottom-nav" aria-label="<?php esc_attr_e( 'Manager quick navigation', 'flms' ); ?>">
-            <a class="flms-mgr-bottom-nav__link is-active" href="#flms-mgr-dashboard"><?php esc_html_e( 'Dashboard', 'flms' ); ?></a>
-            <a class="flms-mgr-bottom-nav__link" href="#flms-mgr-players"><?php esc_html_e( 'Players', 'flms' ); ?></a>
-            <a class="flms-mgr-bottom-nav__link" href="<?php echo esc_url( $create_url ); ?>"><?php esc_html_e( 'Create', 'flms' ); ?></a>
-            <a class="flms-mgr-bottom-nav__link" href="<?php echo esc_url( $inbox_url ); ?>"><?php esc_html_e( 'Inbox', 'flms' ); ?></a>
-            <a class="flms-mgr-bottom-nav__link" href="#flms-mgr-fees"><?php esc_html_e( 'Fees', 'flms' ); ?></a>
-            <a class="flms-mgr-bottom-nav__link" href="#flms-mgr-matches"><?php esc_html_e( 'Matches', 'flms' ); ?></a>
-            <a class="flms-mgr-bottom-nav__link" href="#flms-mgr-settings"><?php esc_html_e( 'Settings', 'flms' ); ?></a>
-        </nav>
-
         <script>
         jQuery(document).ready(function($){
             var signLbl = <?php echo wp_json_encode( esc_html__( 'Sign player', 'flms' ) ); ?>;
@@ -799,6 +803,50 @@ class FLMS_Manager_Dashboard {
             $html .= '</tr>';
         }
         $html .= '</tbody></table></div></section>';
+
+        return $html;
+    }
+
+    private function render_history_preview_panels( $team_id, $friendly_view_url, $league_view_url ) {
+        $friendly_rows = array_slice( $this->get_completed_friendly_matches( $team_id ), 0, 5 );
+        $league_groups = $this->get_completed_league_matches_grouped( $team_id );
+        $league_rows   = [];
+        foreach ( $league_groups as $group_rows ) {
+            foreach ( $group_rows as $row ) {
+                $league_rows[] = $row;
+            }
+        }
+        $league_rows = array_slice( $league_rows, 0, 5 );
+
+        $html  = '<section id="flms-mgr-matches" class="flms-mgr-card flms-mgr-card--history" aria-labelledby="flms-mgr-preview-friendly-title">';
+        $html .= '<div class="flms-mgr-card__head"><h2 id="flms-mgr-preview-friendly-title" class="flms-mgr-card__title">' . esc_html__( 'Recent friendly matches', 'flms' ) . '</h2></div>';
+        if ( empty( $friendly_rows ) ) {
+            $html .= '<p class="flms-mgr-empty">' . esc_html__( 'No completed friendly matches yet.', 'flms' ) . '</p>';
+        } else {
+            $html .= '<div class="flms-mgr-scroll flms-table-responsive"><table class="flms-league-table flms-mgr-table">';
+            $html .= '<thead><tr><th>' . esc_html__( 'Date', 'flms' ) . '</th><th>' . esc_html__( 'Match', 'flms' ) . '</th><th>' . esc_html__( 'Score', 'flms' ) . '</th></tr></thead><tbody>';
+            foreach ( $friendly_rows as $r ) {
+                $html .= '<tr><td>' . esc_html( $r['date'] ) . '</td><td>' . esc_html( $r['match'] ) . '</td><td><strong>' . esc_html( $r['score'] ) . '</strong></td></tr>';
+            }
+            $html .= '</tbody></table></div>';
+        }
+        $html .= '<p class="flms-mgr-card__hint"><a href="' . esc_url( $friendly_view_url ) . '">' . esc_html__( 'See more friendly matches', 'flms' ) . '</a></p>';
+        $html .= '</section>';
+
+        $html .= '<section class="flms-mgr-card flms-mgr-card--history" aria-labelledby="flms-mgr-preview-league-title">';
+        $html .= '<div class="flms-mgr-card__head"><h2 id="flms-mgr-preview-league-title" class="flms-mgr-card__title">' . esc_html__( 'Recent league matches', 'flms' ) . '</h2></div>';
+        if ( empty( $league_rows ) ) {
+            $html .= '<p class="flms-mgr-empty">' . esc_html__( 'No completed league matches yet.', 'flms' ) . '</p>';
+        } else {
+            $html .= '<div class="flms-mgr-scroll flms-table-responsive"><table class="flms-league-table flms-mgr-table">';
+            $html .= '<thead><tr><th>' . esc_html__( 'Date', 'flms' ) . '</th><th>' . esc_html__( 'Match', 'flms' ) . '</th><th>' . esc_html__( 'Score', 'flms' ) . '</th></tr></thead><tbody>';
+            foreach ( $league_rows as $r ) {
+                $html .= '<tr><td>' . esc_html( $r['date'] ) . '</td><td>' . esc_html( $r['match'] ) . '</td><td><strong>' . esc_html( $r['score'] ) . '</strong></td></tr>';
+            }
+            $html .= '</tbody></table></div>';
+        }
+        $html .= '<p class="flms-mgr-card__hint"><a href="' . esc_url( $league_view_url ) . '">' . esc_html__( 'See more league matches', 'flms' ) . '</a></p>';
+        $html .= '</section>';
 
         return $html;
     }
