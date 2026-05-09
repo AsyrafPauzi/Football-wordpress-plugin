@@ -587,9 +587,14 @@ class FLMS_Friendly {
         if ( ! is_user_logged_in() ) {
             return '<div class="flms-dashboard-wrapper flms-friendly-create dark-mode"><p class="flms-error">Please <a href="' . esc_url( wp_login_url( get_permalink() ) ) . '" style="color:var(--flms-gold);">login</a> to create a friendly match request.</p></div>';
         }
-        $team_ids = self::get_current_manager_team_ids();
-        if ( empty( $team_ids ) ) {
+        $base_team_ids = self::get_first_manager_team_id();
+        if ( empty( $base_team_ids ) ) {
             return '<div class="flms-dashboard-wrapper flms-friendly-create dark-mode"><p class="flms-error">You need to have a team to create a friendly match. Create or register a team first.</p></div>';
+        }
+        $base_team_id = (int) $base_team_ids[0];
+        $base_team    = get_post( $base_team_id );
+        if ( ! $base_team ) {
+            return '<div class="flms-dashboard-wrapper flms-friendly-create dark-mode"><p class="flms-error">Your base team could not be loaded. Please try again.</p></div>';
         }
 
         $msg = isset( $_GET['flms_friendly_msg'] ) ? sanitize_text_field( $_GET['flms_friendly_msg'] ) : '';
@@ -637,11 +642,8 @@ class FLMS_Friendly {
                             <div class="flms-form-grid">
                                 <div class="form-group">
                                     <label>Your Team</label>
-                                    <select name="host_team_id" required>
-                                        <?php foreach ( $team_ids as $tid ) : $t = get_post( $tid ); if ( ! $t ) continue; ?>
-                                            <option value="<?php echo (int) $tid; ?>"><?php echo esc_html( $t->post_title ); ?></option>
-                                        <?php endforeach; ?>
-                                    </select>
+                                    <input type="text" value="<?php echo esc_attr( $base_team->post_title ); ?>" readonly>
+                                    <input type="hidden" name="host_team_id" value="<?php echo (int) $base_team_id; ?>">
                                 </div>
                                 <div class="form-group">
                                     <label>Date</label>
@@ -1879,9 +1881,9 @@ class FLMS_Friendly {
 
         if ( isset( $_POST['flms_action'] ) && $_POST['flms_action'] === 'friendly_create' ) {
             if ( ! wp_verify_nonce( $_POST['_wpnonce'] ?? '', 'flms_friendly_create' ) ) return;
-            $host_team_id = intval( $_POST['host_team_id'] ?? 0 );
-            $team_ids = self::get_current_manager_team_ids();
-            if ( ! in_array( $host_team_id, $team_ids, true ) ) wp_die( 'Invalid team.' );
+            $base_team_ids = self::get_first_manager_team_id();
+            $host_team_id  = ! empty( $base_team_ids ) ? (int) $base_team_ids[0] : 0;
+            if ( $host_team_id <= 0 ) wp_die( 'Base team not found.' );
             $date = sanitize_text_field( $_POST['friendly_date'] ?? '' );
             $time = sanitize_text_field( $_POST['friendly_time'] ?? '' );
             $place = sanitize_text_field( $_POST['friendly_place'] ?? '' );

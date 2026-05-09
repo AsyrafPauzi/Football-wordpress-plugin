@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Football League Management System
  * Description: Enterprise league management with WooCommerce & JetEngine integration.
- * Version: 1.1
+ * Version: 5.5.9
  * Author: Asyraf Pauzi
  * Text Domain: flms
  */
@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Define Constants
 define( 'FLMS_PATH', plugin_dir_path( __FILE__ ) );
 define( 'FLMS_URL', plugin_dir_url( __FILE__ ) );
-define( 'FLMS_VERSION', '5.5.5' );
+define( 'FLMS_VERSION', '5.5.9' );
 define( 'FLMS_FRIENDLY_FEE_PRODUCT_ID', 23058 );
 
 // Include Classes
