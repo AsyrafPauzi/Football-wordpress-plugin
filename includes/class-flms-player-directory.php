@@ -17,7 +17,7 @@ class FLMS_Player_Directory {
         $paged = ( get_query_var( 'paged' ) ) ? absint( get_query_var( 'paged' ) ) : 1;
         if ( $paged < 1 ) { $paged = 1; }
 
-        $list_cache_key = 'flms_dir_' . FLMS_Cache_Bump::version() . '_' . md5( $search_query . '|' . $tour_filter );
+        $list_cache_key = 'flms_dir_' . FLMS_Cache_Bump::version() . '_' . md5( $search_query . '|' . $tour_filter . '|teams3' );
         $unique_players = get_transient( $list_cache_key );
 
         if ( false === $unique_players || ! is_array( $unique_players ) ) {
@@ -83,11 +83,12 @@ class FLMS_Player_Directory {
                         $tid = $val('flms_team_id');
                         $team_name_display = 'Free Agent';
                         $pos = $str('flms_position') ?: '-';
+                        $tour_id = 0;
 
                         if ( $tid ) {
-                            $tour_id = get_post_meta($tid, 'flms_tournament_id', true);
-                            if ( ! empty($tour_id) ) {
-                                $team_name_display = get_the_title($tid);
+                            $tour_id = (int) get_post_meta( $tid, 'flms_tournament_id', true );
+                            if ( $tour_id ) {
+                                $team_name_display = get_the_title( $tid );
                             }
                         }
 
@@ -103,16 +104,7 @@ class FLMS_Player_Directory {
                             // Merge Stats
                             foreach($stats as $k => $v) $unique_players[$key][$k] += $v;
                             
-                            // Merge Teams
-                            if ( $team_name_display !== 'Free Agent' ) {
-                                $current_team_str = $unique_players[$key]['team'];
-                                if ( $current_team_str === 'Free Agent' || $current_team_str === '' ) {
-                                    $unique_players[$key]['team'] = $team_name_display;
-                                } 
-                                elseif ( strpos($current_team_str, $team_name_display) === false ) {
-                                    $unique_players[$key]['team'] .= ' / ' . $team_name_display;
-                                }
-                            }
+                            $this->player_directory_add_team_league_entry( $unique_players[ $key ], $tid, $tour_id, $modified_ts );
 
                             // Merge Positions
                             if ( $pos !== '-' && strpos($unique_players[$key]['pos'], $pos) === false ) {
@@ -131,15 +123,22 @@ class FLMS_Player_Directory {
                             $unique_players[$key] = array_merge($stats, [
                                 'id'   => $pid, 
                                 'name' => get_the_title(),
-                                'team' => $team_name_display,
+                                'teams_map' => [],
                                 'num'  => $str('flms_number') ?: '-',
                                 'pos'  => $pos,
                                 'modified_ts' => $modified_ts
                             ]);
+                            $this->player_directory_add_team_league_entry( $unique_players[ $key ], $tid, $tour_id, $modified_ts );
                         }
                     }
                 }
                 wp_reset_postdata();
+
+                foreach ( $unique_players as &$flms_dir_row ) {
+                    $flms_dir_row['team'] = $this->player_directory_format_latest_team_leagues( $flms_dir_row );
+                    unset( $flms_dir_row['teams_map'] );
+                }
+                unset( $flms_dir_row );
 
                 uasort($unique_players, function($a, $b) { return $b['points'] <=> $a['points']; });
             }
@@ -206,7 +205,7 @@ class FLMS_Player_Directory {
                             <td><a href="<?php echo $link; ?>"><img src="<?php echo esc_url($photo); ?>" class="dir-avatar"></a></td>
                             <td class="player-name"><a href="<?php echo $link; ?>"><?php echo esc_html($p['name']); ?></a></td>
                             
-                            <td class="player-team" style="font-size:11px; white-space:normal; max-width:150px; line-height:1.2;"><?php echo esc_html($p['team']); ?></td>
+                            <td class="player-team"><?php echo esc_html($p['team']); ?></td>
                             <td><span class="pos-badge"><?php echo esc_html( $p['pos'] ); ?></span></td>
                             
                             <td style="font-weight:bold; color:#555;"><?php echo $p['apps']; ?></td>
@@ -246,6 +245,72 @@ class FLMS_Player_Directory {
         <?php endif; ?>
         </div><?php
         return ob_get_clean();
+    }
+
+    /**
+     * Track unique team+tournament rows for the directory; sort key prefers league start date.
+     *
+     * @param array $player_row Merged row (by IC); must include teams_map array.
+     * @param int   $tid        flms_team post ID.
+     * @param int   $tour_id    Tournament / product ID from team meta (0 if none).
+     * @param int   $modified_ts Player post modified time (fallback sort).
+     */
+    private function player_directory_add_team_league_entry( array &$player_row, $tid, $tour_id, $modified_ts ) {
+        $tid = (int) $tid;
+        if ( $tid <= 0 ) {
+            return;
+        }
+        $tour_id = (int) $tour_id;
+        $team_title = get_the_title( $tid );
+        if ( $team_title === '' ) {
+            return;
+        }
+        if ( ! isset( $player_row['teams_map'] ) || ! is_array( $player_row['teams_map'] ) ) {
+            $player_row['teams_map'] = [];
+        }
+        $label = $team_title;
+        $sort  = (int) $modified_ts;
+        if ( $tour_id > 0 ) {
+            $league_title = get_the_title( $tour_id );
+            if ( $league_title !== '' ) {
+                $label = $league_title . ': ' . $team_title;
+            }
+            $sd = get_post_meta( $tour_id, '_flms_start_date', true );
+            if ( $sd !== '' && $sd !== null ) {
+                $ts = strtotime( (string) $sd );
+                if ( $ts ) {
+                    $sort = max( $sort, $ts );
+                }
+            }
+        }
+        $uniq = $tour_id . '_' . $tid;
+        if ( ! isset( $player_row['teams_map'][ $uniq ] ) || $sort > (int) $player_row['teams_map'][ $uniq ]['sort'] ) {
+            $player_row['teams_map'][ $uniq ] = [
+                'label' => $label,
+                'sort'  => $sort,
+            ];
+        }
+    }
+
+    /**
+     * Show up to 3 most recent league+team entries (by sort date).
+     *
+     * @param array $player_row Row with teams_map.
+     */
+    private function player_directory_format_latest_team_leagues( array $player_row ) {
+        if ( empty( $player_row['teams_map'] ) || ! is_array( $player_row['teams_map'] ) ) {
+            return 'Free Agent';
+        }
+        $entries = array_values( $player_row['teams_map'] );
+        usort(
+            $entries,
+            static function ( $a, $b ) {
+                return ( (int) $b['sort'] ) <=> ( (int) $a['sort'] );
+            }
+        );
+        $entries = array_slice( $entries, 0, 3 );
+        $labels  = array_column( $entries, 'label' );
+        return $labels ? implode( ' · ', $labels ) : 'Free Agent';
     }
 
     private function render_search_form($search, $tour_id) {

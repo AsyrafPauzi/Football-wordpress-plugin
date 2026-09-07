@@ -545,6 +545,7 @@ class FLMS_Manager_Dashboard {
                 <div class="flms-modal-content flms-mgr-modal__dialog">
                     <button type="button" class="close-modal flms-mgr-modal__close" aria-label="<?php esc_attr_e( 'Close', 'flms' ); ?>">&times;</button>
                     <h3 id="flms-mgr-edit-title" class="flms-mgr-modal__title"><?php esc_html_e( 'Edit player', 'flms' ); ?></h3>
+                    <p class="flms-mgr-card__hint" style="margin-top:-0.25rem;margin-bottom:0.75rem;"><?php esc_html_e( 'Full name and IC / passport cannot be changed here after registration. A site administrator can update them in WordPress admin (Players).', 'flms' ); ?></p>
                     <form method="post" enctype="multipart/form-data" class="flms-mgr-modal__form">
                         <div class="flms-form-grid flms-mgr-form-grid">
                             <div class="form-group flms-mgr-field flms-mgr-field--full">
@@ -553,7 +554,7 @@ class FLMS_Manager_Dashboard {
                             </div>
                             <div class="form-group flms-mgr-field flms-mgr-field--full">
                                 <label class="flms-mgr-label" for="edit_name"><?php esc_html_e( 'Full name', 'flms' ); ?></label>
-                                <input class="flms-mgr-input" type="text" name="edit_name" id="edit_name" required>
+                                <input class="flms-mgr-input" type="text" name="edit_name" id="edit_name" readonly autocomplete="off" style="background:#f3f4f6;cursor:not-allowed;">
                             </div>
                             <div class="form-group flms-mgr-field">
                                 <label class="flms-mgr-label" for="edit_number"><?php esc_html_e( 'Number', 'flms' ); ?></label>
@@ -574,7 +575,7 @@ class FLMS_Manager_Dashboard {
                             </div>
                             <div class="form-group flms-mgr-field flms-mgr-field--full">
                                 <label class="flms-mgr-label" for="edit_ic"><?php esc_html_e( 'IC / passport', 'flms' ); ?></label>
-                                <input class="flms-mgr-input" type="text" name="edit_ic" id="edit_ic">
+                                <input class="flms-mgr-input" type="text" name="edit_ic" id="edit_ic" readonly autocomplete="off" style="background:#f3f4f6;cursor:not-allowed;">
                             </div>
                         </div>
                         <input type="hidden" name="edit_pid" id="edit_pid">
@@ -1188,7 +1189,7 @@ class FLMS_Manager_Dashboard {
             exit;
         }
 
-        // 9. Update Player Details (UPDATED: IC CLEANING)
+        // 9. Update player (squad fields only; name and IC are not changed here — admins edit the player in wp-admin).
         if ( isset($_POST['flms_action']) && $_POST['flms_action'] === 'update_player' ) {
             check_admin_referer('flms_update_player_nonce');
             
@@ -1198,19 +1199,10 @@ class FLMS_Manager_Dashboard {
             // Verify Ownership
             if(get_post_field('post_author', $tid) != get_current_user_id()) wp_die('Unauthorized');
 
-            // Sanitize & Update
-            $name = sanitize_text_field($_POST['edit_name']);
-            if(!empty($name)) {
-                wp_update_post(['ID' => $pid, 'post_title' => $name]);
-            }
-            
-            // CLEAN IC
-            $ic = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $_POST['edit_ic']));
-
+            // Name and IC are locked for team managers after registration; only admins may change them in wp-admin.
             update_post_meta($pid, 'flms_number', sanitize_text_field($_POST['edit_number']));
             update_post_meta($pid, 'flms_age', sanitize_text_field($_POST['edit_age']));
             update_post_meta($pid, 'flms_position', sanitize_text_field($_POST['edit_pos']));
-            update_post_meta($pid, 'flms_ic', $ic);
 
             if ( ! empty( $_FILES['edit_photo']['name'] ) ) {
                 require_once( ABSPATH . 'wp-admin/includes/image.php' );

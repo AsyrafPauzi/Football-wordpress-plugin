@@ -809,6 +809,12 @@ a.tab-filter-btn.active { color: #B5952F!important; border-bottom-color: var(--f
         min-width: 1000px; /* Force table to be very wide so nothing squishes */
     }
 
+    /* Player directory uses fixed column widths — avoid forcing a very wide scroll area */
+    .flms-player-directory .flms-player-table {
+        min-width: 100%;
+        width: 100%;
+    }
+
     /* Keep Name visible and full */
     .flms-player-table td.player-name {
         position: static; /* No freeze as requested */
@@ -1910,6 +1916,73 @@ button.search-btn {
     padding: 14px 16px;
     font-size: 14px;
 }
+
+/* Player directory: keep Pos + Apps…PTS tight so they do not stretch across empty space */
+.flms-player-directory .flms-league-table.flms-player-table {
+    table-layout: fixed;
+    width: 100%;
+}
+.flms-player-directory .flms-player-table th:first-child,
+.flms-player-directory .flms-player-table td:first-child {
+    width: 48px;
+    padding-left: 8px;
+    padding-right: 4px;
+}
+.flms-player-directory .flms-player-table th:nth-child(2),
+.flms-player-directory .flms-player-table td.player-name {
+    width: 17%;
+    min-width: 0;
+    max-width: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.flms-player-directory .flms-player-table th:nth-child(3),
+.flms-player-directory .flms-player-table td.player-team {
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.25;
+    font-size: 11px;
+    color: #555;
+}
+/* Pos (4) + Apps through RC (5–10): narrow numeric columns */
+.flms-player-directory .flms-player-table th:nth-child(n+4):not(:last-child),
+.flms-player-directory .flms-player-table td:nth-child(n+4):not(:last-child) {
+    width: 2.4rem;
+    max-width: 2.75rem;
+    padding: 10px 2px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    text-align: center;
+    font-size: 13px;
+}
+.flms-player-directory .flms-player-table th:nth-child(4),
+.flms-player-directory .flms-player-table td:nth-child(4) {
+    width: 2.85rem;
+    max-width: 3.25rem;
+}
+/* PTS + medal */
+.flms-player-directory .flms-player-table th:last-child,
+.flms-player-directory .flms-player-table td:last-child {
+    width: 3.35rem;
+    max-width: 4.5rem;
+    padding: 10px 4px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    text-align: center;
+    font-size: 13px;
+}
+.flms-player-directory .flms-player-table td.stat-points {
+    font-size: 13px;
+}
+.flms-player-directory .flms-player-table .pos-badge {
+    padding: 3px 6px;
+    font-size: 9px;
+}
+
 .flms-player-directory .no-results,
 .flms-team-directory .no-results {
     text-align: center;

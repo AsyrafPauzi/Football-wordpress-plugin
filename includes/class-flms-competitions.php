@@ -15,6 +15,27 @@ class FLMS_Competitions {
         woocommerce_wp_text_input([ 'id' => '_flms_end_date', 'label' => 'End Date', 'type' => 'date' ]);
         woocommerce_wp_select([ 'id' => '_flms_format', 'label' => 'Format', 'options' => [ 'round_robin' => 'League (Round Robin)', 'knockout' => 'Knockout', 'group_knockout' => 'Group Stage + Knockout' ] ]);
         woocommerce_wp_text_input([ 'id' => '_flms_num_groups', 'label' => 'Number of Groups', 'type' => 'number', 'description' => 'Only used for "Group Stage + Knockout" format. e.g. 4 groups for 16 teams.', 'desc_tip' => true, 'custom_attributes' => [ 'min' => '2', 'step' => '1' ] ]);
+        woocommerce_wp_select([
+            'id'          => '_flms_seeding_logic',
+            'label'       => 'Knockout Seeding Logic',
+            'description' => 'How qualifiers are paired in the knockout bracket. Only used for "Group Stage + Knockout".',
+            'desc_tip'    => true,
+            'options'     => [
+                'cross_half' => 'Cross-half (A vs C · B vs D) — Default',
+                'adjacent'   => 'Adjacent groups (A vs B · C vs D) — Classic',
+                'manual'     => 'Manual (list qualifiers in group order, override per seed)',
+            ],
+        ]);
+        woocommerce_wp_select([
+            'id'          => '_flms_third_place_match',
+            'label'       => 'Third-Place Play-off',
+            'description' => 'Adds an extra match between the two losing semi-finalists to determine 3rd and 4th place.',
+            'desc_tip'    => true,
+            'options'     => [
+                'yes' => 'Yes — generate a 3rd-place match (Default)',
+                'no'  => 'No — only Final decides 1st and 2nd, others tie at 3rd',
+            ],
+        ]);
 
         echo '<h4>📅 Transfer Windows (3 Stages)</h4>';
         woocommerce_wp_text_input([ 'id' => '_flms_window_open_start', 'label' => 'Stage 1: Open (Start)', 'type' => 'date' ]);
@@ -31,7 +52,7 @@ class FLMS_Competitions {
 
     public function save_fields( $post_id ) {
         $fields = [
-            '_flms_start_date', '_flms_end_date', '_flms_format', '_flms_num_groups',
+            '_flms_start_date', '_flms_end_date', '_flms_format', '_flms_num_groups', '_flms_seeding_logic', '_flms_third_place_match',
             '_flms_window_open_start', '_flms_window_open_end',
             '_flms_window_locked_start', '_flms_window_locked_end',
             '_flms_window_paid_start', '_flms_window_paid_end'

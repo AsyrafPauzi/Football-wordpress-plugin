@@ -406,9 +406,18 @@ class FLMS_Match_Engine {
             $current_round_match_ids[] = $mid;
         }
 
+        // Track the Semi-Final match IDs so we can build a 3rd-place play-off later.
+        $semi_final_match_ids = [];
+
         while ( count( $current_round_match_ids ) > 1 ) {
             $round++;
             $next_round_match_ids = [];
+
+            // If this round will produce the Final (i.e. only 2 matches remain),
+            // the current $current_round_match_ids ARE the Semi-Finals.
+            if ( count( $current_round_match_ids ) === 2 ) {
+                $semi_final_match_ids = $current_round_match_ids;
+            }
 
             for ( $i = 0; $i < count( $current_round_match_ids ); $i += 2 ) {
                 
@@ -433,6 +442,39 @@ class FLMS_Match_Engine {
                 }
             }
             $current_round_match_ids = $next_round_match_ids;
+        }
+
+        // -----------------------------------------------------------------
+        // Optional: Third-Place Play-off (Loser SF1 vs Loser SF2)
+        // -----------------------------------------------------------------
+        // Only valid when we actually have two Semi-Finals AND the tournament
+        // has opted in (default = yes). Lives in the same round as the Final
+        // but is flagged via flms_is_third_place_match so the bracket
+        // renderer and progression handler can treat it specially.
+        $third_place_enabled = get_post_meta( $tournament_id, '_flms_third_place_match', true );
+        if ( $third_place_enabled === '' ) {
+            $third_place_enabled = 'yes'; // default ON for legacy tournaments
+        }
+
+        if ( $third_place_enabled === 'yes' && count( $semi_final_match_ids ) === 2 ) {
+            $sf1 = $semi_final_match_ids[0];
+            $sf2 = $semi_final_match_ids[1];
+
+            $third_mid = wp_insert_post([
+                'post_type'   => 'flms_match',
+                'post_title'  => "Third-Place Play-off: TBD vs TBD",
+                'post_status' => 'publish',
+            ]);
+
+            update_post_meta( $third_mid, 'flms_tournament_id', $tournament_id );
+            // Same round as the Final so it appears at the same stage of the bracket.
+            update_post_meta( $third_mid, 'flms_round', $round );
+            update_post_meta( $third_mid, 'flms_match_status', 'scheduled' );
+            update_post_meta( $third_mid, 'flms_match_phase', 'knockout' );
+            update_post_meta( $third_mid, 'flms_is_third_place_match', 1 );
+            // Loser-progression: the LOSER of each SF gets piped into this match.
+            update_post_meta( $third_mid, 'flms_source_match_home_loser', $sf1 );
+            update_post_meta( $third_mid, 'flms_source_match_away_loser', $sf2 );
         }
     }
 

@@ -15,13 +15,24 @@ foreach ( $all_products as $p ) {
 }
 
 $selected_tid = isset( $_GET['tournament_id'] ) ? intval( $_GET['tournament_id'] ) : 0;
-$standings     = [];
-$qualifiers    = 2; // Default: top 2 per group advance
+$standings           = [];
+$qualifiers          = 2;            // Default: top 2 per group advance
+$seeding_logic       = 'cross_half'; // Default: A vs C, B vs D
+$third_place_enabled = 'yes';        // Default: include 3rd-place play-off
 
 if ( $selected_tid ) {
-    $standings  = FLMS_Match_Engine::get_group_standings( $selected_tid );
-    $qualifiers = intval( get_post_meta( $selected_tid, '_flms_ko_qualifiers_per_group', true ) ?: 2 );
+    $standings           = FLMS_Match_Engine::get_group_standings( $selected_tid );
+    $qualifiers          = intval( get_post_meta( $selected_tid, '_flms_ko_qualifiers_per_group', true ) ?: 2 );
+    $seeding_logic       = get_post_meta( $selected_tid, '_flms_seeding_logic', true ) ?: 'cross_half';
+    $third_place_raw     = get_post_meta( $selected_tid, '_flms_third_place_match', true );
+    $third_place_enabled = $third_place_raw === '' ? 'yes' : $third_place_raw;
 }
+
+$seeding_logic_labels = [
+    'cross_half' => 'A1 vs C2 · B1 vs D2 · C1 vs A2 · D1 vs B2 (Cross-half bracket — first half vs second half)',
+    'adjacent'   => 'A1 vs B2 · B1 vs A2 · C1 vs D2 · D1 vs C2 (Classic cross-group bracket)',
+    'manual'     => 'Manual — qualifiers listed in group order, override each seed below as needed.',
+];
 
 // Check for success message
 $msg = isset( $_GET['msg'] ) ? sanitize_text_field( $_GET['msg'] ) : '';
@@ -102,7 +113,9 @@ $msg = isset( $_GET['msg'] ) ? sanitize_text_field( $_GET['msg'] ) : '';
         <h2>Generate Knockout Bracket</h2>
         <p>The system has pre-selected the <strong>top <?php echo $qualifiers; ?> teams from each group</strong> in the correct cross-seeding order below. You can adjust this before generating.</p>
         <p style="background:#fff8dc; padding:10px 15px; border-left:4px solid #D4AF37; border-radius:4px;">
-            <strong>Seeding Logic:</strong> A1 vs B2 · B1 vs A2 · C1 vs D2 · D1 vs C2 (Classic cross-group bracket)
+            <strong>Seeding Logic:</strong> <?php echo esc_html( $seeding_logic_labels[ $seeding_logic ] ?? $seeding_logic_labels['cross_half'] ); ?>
+            <br>
+            <em style="font-size:12px; color:#666;">To change this logic, edit the tournament product and update the "Knockout Seeding Logic" setting.</em>
         </p>
 
         <form method="post" action="<?php echo admin_url( 'admin-post.php' ); ?>">
@@ -110,26 +123,86 @@ $msg = isset( $_GET['msg'] ) ? sanitize_text_field( $_GET['msg'] ) : '';
             <input type="hidden" name="tournament_id" value="<?php echo $selected_tid; ?>">
 
             <?php
-            // Build the seeded qualifier list: A1, B2, B1, A2, C1, D2, D1, C2 etc.
-            $group_keys     = array_keys( $standings );
-            $num_groups     = count( $group_keys );
-            $seeded_pairs   = [];
+            /**
+             * Build the seeded qualifier list according to the tournament's chosen
+             * seeding logic. The order matters because the bracket pairs adjacent
+             * seeds as first-round matches:
+             *   QF1 = seeds 1-2, QF2 = seeds 3-4, QF3 = seeds 5-6, QF4 = seeds 7-8
+             *   SF1 = winners of QF1 & QF2   |   SF2 = winners of QF3 & QF4
+             *
+             * Supported modes (set per tournament under product → "Knockout Seeding Logic"):
+             *   - cross_half : Pair first-half groups with second-half groups so the same
+             *                  group's #1 and #2 sit on opposite sides of the bracket and
+             *                  can only meet again in the final.
+             *                  4 groups (A,B,C,D)  -> A1·C2 / B1·D2 / C1·A2 / D1·B2
+             *                  6 groups (A..F)     -> Pairs (A,D)(B,E)(C,F)
+             *                  8 groups (A..H)     -> Pairs (A,E)(B,F)(C,G)(D,H)
+             *   - adjacent   : Classic A vs B · C vs D logic (original behaviour).
+             *   - manual     : Just lists Winner/Runner-up for each group in order;
+             *                  admin uses the team override dropdowns to wire up seeds.
+             */
+            $group_keys   = array_keys( $standings );
+            $num_groups   = count( $group_keys );
+            $seeded_pairs = [];
 
-            // Pair groups: (0,1), (2,3), (4,5) etc.
-            for ( $g = 0; $g < $num_groups; $g += 2 ) {
-                $g1 = $group_keys[ $g ] ?? null;
-                $g2 = $group_keys[ $g + 1 ] ?? null;
+            $make_seed = function( $role, $group, $team ) {
+                return [ 'label' => $role . ' Group ' . $group, 'team' => $team ];
+            };
 
-                if ( $g1 && $g2 ) {
-                    // Winner G1 vs Runner-up G2
-                    $seeded_pairs[] = [ 'label' => 'Winner Group ' . $g1, 'team' => $standings[ $g1 ][0] ?? null ];
-                    $seeded_pairs[] = [ 'label' => 'Runner-up Group ' . $g2, 'team' => $standings[ $g2 ][1] ?? null ];
-                    // Winner G2 vs Runner-up G1
-                    $seeded_pairs[] = [ 'label' => 'Winner Group ' . $g2, 'team' => $standings[ $g2 ][0] ?? null ];
-                    $seeded_pairs[] = [ 'label' => 'Runner-up Group ' . $g1, 'team' => $standings[ $g1 ][1] ?? null ];
-                } elseif ( $g1 ) {
-                    // Odd group — include just the winner
-                    $seeded_pairs[] = [ 'label' => 'Winner Group ' . $g1, 'team' => $standings[ $g1 ][0] ?? null ];
+            if ( $seeding_logic === 'adjacent' ) {
+                // Pair groups: (0,1), (2,3), (4,5)...
+                for ( $g = 0; $g < $num_groups; $g += 2 ) {
+                    $g1 = $group_keys[ $g ] ?? null;
+                    $g2 = $group_keys[ $g + 1 ] ?? null;
+
+                    if ( $g1 && $g2 ) {
+                        $seeded_pairs[] = $make_seed( 'Winner',   $g1, $standings[ $g1 ][0] ?? null );
+                        $seeded_pairs[] = $make_seed( 'Runner-up', $g2, $standings[ $g2 ][1] ?? null );
+                        $seeded_pairs[] = $make_seed( 'Winner',   $g2, $standings[ $g2 ][0] ?? null );
+                        $seeded_pairs[] = $make_seed( 'Runner-up', $g1, $standings[ $g1 ][1] ?? null );
+                    } elseif ( $g1 ) {
+                        $seeded_pairs[] = $make_seed( 'Winner', $g1, $standings[ $g1 ][0] ?? null );
+                    }
+                }
+            } elseif ( $seeding_logic === 'manual' ) {
+                // Just list every qualifier (Winner then Runner-up) per group in order.
+                foreach ( $group_keys as $g ) {
+                    for ( $q = 0; $q < $qualifiers; $q++ ) {
+                        $role = ( $q === 0 ) ? 'Winner' : ( $q === 1 ? 'Runner-up' : '#' . ( $q + 1 ) );
+                        $seeded_pairs[] = $make_seed( $role, $g, $standings[ $g ][ $q ] ?? null );
+                    }
+                }
+            } else {
+                // Default: cross_half bracket (Nelvin's preferred logic).
+                $half = (int) floor( $num_groups / 2 );
+
+                // Build the half-pairs once: (first-half group, paired second-half group).
+                $half_pairs = [];
+                for ( $i = 0; $i < $half; $i++ ) {
+                    $g1 = $group_keys[ $i ] ?? null;
+                    $g2 = $group_keys[ $i + $half ] ?? null;
+                    if ( $g1 && $g2 ) {
+                        $half_pairs[] = [ $g1, $g2 ];
+                    }
+                }
+
+                // Top half of bracket — Winner of first-half group vs Runner-up of second-half group.
+                foreach ( $half_pairs as [ $g1, $g2 ] ) {
+                    $seeded_pairs[] = $make_seed( 'Winner',   $g1, $standings[ $g1 ][0] ?? null );
+                    $seeded_pairs[] = $make_seed( 'Runner-up', $g2, $standings[ $g2 ][1] ?? null );
+                }
+                // Bottom half of bracket — Winner of second-half group vs Runner-up of first-half group.
+                foreach ( $half_pairs as [ $g1, $g2 ] ) {
+                    $seeded_pairs[] = $make_seed( 'Winner',   $g2, $standings[ $g2 ][0] ?? null );
+                    $seeded_pairs[] = $make_seed( 'Runner-up', $g1, $standings[ $g1 ][1] ?? null );
+                }
+
+                // Odd number of groups — append the leftover middle group's winner as a lone seed.
+                if ( $num_groups % 2 === 1 ) {
+                    $g_extra = $group_keys[ $half ] ?? null;
+                    if ( $g_extra ) {
+                        $seeded_pairs[] = $make_seed( 'Winner', $g_extra, $standings[ $g_extra ][0] ?? null );
+                    }
                 }
             }
             ?>
@@ -170,7 +243,13 @@ $msg = isset( $_GET['msg'] ) ? sanitize_text_field( $_GET['msg'] ) : '';
 
             <p style="margin-top:20px;">
                 <?php submit_button( '🏆 Generate Knockout Bracket', 'primary', 'submit', false ); ?>
-                <span style="color:#888; font-size:13px; margin-left:15px;">This will create all Quarter-Final, Semi-Final and Final placeholder matches.</span>
+                <span style="color:#888; font-size:13px; margin-left:15px;">
+                    This will create all Quarter-Final, Semi-Final and Final placeholder matches<?php
+                    if ( $third_place_enabled === 'yes' ) {
+                        echo ', plus a <strong>Third-Place Play-off</strong> for 3rd/4th place';
+                    }
+                ?>.
+                </span>
             </p>
         </form>
 
